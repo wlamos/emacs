@@ -212,11 +212,45 @@ Otherwise, delete current line."
       (org/ext-delete-subtree)
     (my-delete-lines)))
 
+(defun org/ext-point-at-heading-preface-p ()
+  "Return t if point is at heading's preface, i.e not in the content of heading"
+  (and (org-on-heading-p)
+       (let ((heads (org-heading-components))
+	     (col (current-column)))
+	 (if (third heads)		; A TODO heading
+	     (if (fourth heads)		; A TODO heading with priority
+		 (save-excursion
+		   (goto-char (line-beginning-position))
+		   (re-search-forward "\\[#.\\]" (line-end-position))
+		   (skip-chars-forward " \t")
+		   (< col (current-column)))
+	       (save-excursion
+		 (goto-char (line-beginning-position))
+		 (re-search-forward (concat "\\("
+				     (mapconcat 'regexp-quote org-todo-keywords-1 "\\|")
+				     "\\)")
+				    (line-end-position))
+		 (skip-chars-forward " \t")
+		 (< col (current-column))))
+	   ;; A normal heading
+	   (if (fourth heads)		; A normal heading with priority
+	       (save-excursion
+		 (goto-char (line-beginning-position))
+		 (re-search-forward "\\[#.\\]" (line-end-position))
+		 (skip-chars-forward " \t")
+		 (< col (current-column)))
+	     ;; A normal heading without priority
+	     (save-excursion
+	       (goto-char (line-beginning-position))
+	       (re-search-forward "\\(\\*+\\)[ \t]+" (line-end-position))
+	       (skip-chars-forward " \t")
+	       (< col (current-column))))))))
+
 (defun org/ext-delete ()
   "Delete the whole subtree when cursor is in heading line
 Otherwise, delete one char."
   (interactive)
-  (if (org-on-heading-p)
+  (if (org/ext-point-at-heading-preface-p)
       (org/ext-delete-subtree)
     (org-delete-char 1)))
 
