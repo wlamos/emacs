@@ -127,6 +127,18 @@ Just insert an *."
                  (point))))
       (<= (point) (- idx 2)))))
 
+(defun org/ext-adjust-level (level)
+  "Adjust (promote/demote) current heading to level `level'.
+When this function is called, the point must be at a heading line
+"
+  (goto-char (line-beginning-position))
+  (let ((curr-level (org-outline-level)))
+    (while (/= (org-outline-level) level)
+      (if (> level curr-level)
+          (org-do-demote)
+        (org-do-promote))))
+  (goto-char (line-end-position)))
+
 (defun org/ext-return ()
   "Create new heading if possible.
 If cursor is at the end of a heading line, create a new heading at the same level;
@@ -137,12 +149,20 @@ two heading lines, otherwise, the normal enter key."
       (let ((heads (org-heading-components))
             (level (save-excursion
                      (goto-char (line-beginning-position))
-                     (org-outline-level))))
-        (if  (eolp)                    ; at end of line
-            (if (null (third heads))
-                (org-insert-heading-respect-content)
-              (org-insert-todo-heading 0))
-          ;; not at end of line
+                     (org-outline-level)))
+            (moveup (bolp)))
+        (cond
+         ((or (eolp) (bolp))
+          (outline-end-of-subtree)
+          (if (null (third heads))
+              (org-insert-heading-respect-content)
+            (org-insert-todo-heading 0))
+          (org/ext-adjust-level level)
+          
+          (when moveup                  ; when cursor is at the beginning of the line, move it up
+            (org-move-subtree-up)
+            (goto-char (line-end-position))))
+         (t
           (if (org/ext-not-in-heading-content-p) ; not in the content of heading
               (progn
                 (goto-char (line-end-position))
@@ -151,16 +171,13 @@ two heading lines, otherwise, the normal enter key."
                   (progn
                     (outline-end-of-subtree)
                     (org-insert-todo-heading 0)
-                    (goto-char (line-beginning-position))
-                    (while (/= (org-outline-level) level)
-                      (org-do-promote))
-                    (goto-char (line-end-position)))))
+                    (org/ext-adjust-level level))))
             ;; in content of the heading split the heading
             (if (null (third heads))     ; a todo heading 
                 (org-insert-heading t)
               (let ((text (delete-and-extract-region (point) (line-end-position))))
                 (org-insert-todo-heading 0)
-                (insert text))))))
+                (insert text)))))))
     (call-interactively 'org-return)))
 
 (defun org/ext-S-return ()
@@ -173,7 +190,9 @@ two heading lines, otherwise, the normal enter key."
 		(progn
 		  (org-insert-heading-respect-content)
 		  (org-metaright))
-	      (org-insert-todo-subheading 0))
+	      (progn
+		(outline-end-of-subtree)
+		(org-insert-todo-subheading 0)))
 	  ;; not at end of line
 	  (if (org/ext-not-in-heading-content-p) ; not in the content of heading
 	      (call-interactively 'org-return)
@@ -192,6 +211,14 @@ Otherwise, delete current line."
   (if (org-on-heading-p)
       (org/ext-delete-subtree)
     (my-delete-lines)))
+
+(defun org/ext-delete ()
+  "Delete the whole subtree when cursor is in heading line
+Otherwise, delete one char."
+  (interactive)
+  (if (org-on-heading-p)
+      (org/ext-delete-subtree)
+    (org-delete-char 1)))
 
 (defun org/ext-delete-subtree (&optional n)
   ""
@@ -216,24 +243,33 @@ Otherwise, delete current line."
     (when (> end beg)
       (delete-region beg end))))
 
-;; TODO enhance it for cases that current heading has following siblings
-;; For those cases, we should move current sub-tree to end of the last siblings
-;; then promote current subtree
+(defun org/ext-promote-subtree ()
+  "Promote current subtree
+Move current subtree down and promote it if it has following siblings."
+  (interactive)
+  (let ((level (save-excursion
+                 (goto-char (line-beginning-position))
+                 (org-outline-level))))
+    (when (> level 1)
+      (while (save-excursion
+               (outline-get-next-sibling))
+        (call-interactively 'org-move-subtree-down))
+      (call-interactively 'org-promote-subtree))))
+
 (defun org/ext-metaleft (&optional arg)
   ""
   (interactive "P")
   (cond
    ((org-at-table-p) (org-call-with-arg 'org-table-move-column 'left))
    ((org-on-heading-p)
-    (call-interactively 'org-promote-subtree))
+    (call-interactively 'org/ext-promote-subtree))
    ((org-region-active-p)
     (call-interactively 'org-do-promote))
    ((org-at-item-p) (call-interactively 'org-outdent-item))
    (t (call-interactively 'backward-word))))
 
 (defun org/ext-demote-subtree ()
-  "Only demote the subtree when it's legal.
-"
+  "Only demote the subtree when it's legal."
   (interactive)
   (let ((has-prev (save-excursion
                     (outline-back-to-heading)
@@ -254,6 +290,42 @@ Otherwise, delete current line."
    ((org-at-item-p) (call-interactively 'org-indent-item))
    (t (call-interactively 'forward-word))))
 
+(defun org/ext-ctrl-return ()
+  "Insert a non-heading line"
+  (interactive)
+  (when (org/ext-not-in-heading-content-p)
+    (goto-char (line-end-position)))
+  (call-interactively 'org-return-indent))
+
+(defun org/ext-ctrl-w ()
+  "Cut current subtree if called at a heading line
+If called with cursor not at a heading line, calling `kill-region"
+  (interactive)
+  (if (org-at-heading-p)
+      (call-interactively 'org-cut-subtree)
+    (call-interactively 'kill-region)))
+
+(defun org/ext-meta-w ()
+  "Copy current subtree if called at a heading line
+If called with cursor not at a heading line, calling the default command"
+  (interactive)
+  (if (org-at-heading-p)
+      (call-interactively 'org-copy-subtree)
+    (call-interactively 'kill-ring-save)))
+
+(defun org/ext-meta-d ()
+  "If cursor is in a heading, duplicate tree; otherwise duplicate current line."
+  (interactive)
+  (if (org-at-heading-p)
+      (progn
+        (call-interactively 'org-copy-subtree)
+        (let ((col (current-column)))
+          (save-excursion
+            (goto-char (line-beginning-position))
+            (call-interactively 'org-paste-subtree))
+          (move-to-column col)))
+    (call-interactively 'my-duplicate-lines)))
+
 (define-key org-mode-map "-" 'org/ext-collapse)
 (define-key org-mode-map "+" 'org/ext-expand)
 (define-key org-mode-map "=" 'org/ext-expand=)
@@ -261,8 +333,20 @@ Otherwise, delete current line."
 (define-key org-mode-map [(return)] 'org/ext-return)
 (define-key org-mode-map [(shift return)] 'org/ext-S-return)
 (define-key org-mode-map [(ctrl d)] 'org/ext-delete-line)
+(define-key org-mode-map [(delete)] 'org/ext-delete)
 (define-key org-mode-map [(meta left)] 'org/ext-metaleft)
 (define-key org-mode-map [(meta right)] 'org/ext-metaright)
+(define-key org-mode-map [(ctrl return)] 'org/ext-ctrl-return)
+(define-key org-mode-map [(ctrl w)] 'org/ext-ctrl-w)
+(define-key org-mode-map [(meta w)] 'org/ext-meta-w)
+(define-key org-mode-map [(meta d)] 'org/ext-meta-d)
+(define-key org-mode-map "\C-c\C-xc" 'org/ext-meta-d)
 
 (provide 'org-ext)
 ;;; org-ext.el ends here
+
+
+
+
+
+
