@@ -1,0 +1,6 @@
+* Todo items
+** TODO Problem moving block of raw text left/right using tab key
+** TODO Backspace should not alter clipboard buffer
+   I can not re-create this problem, a windows thing?
+** TODO Org-mode, when I Schedule C-c C-s, it eats eof and causes wrap of following line
+   When using dev version, it works at my side, but fails at Larry's side, a windows thing?
