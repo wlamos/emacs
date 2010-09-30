@@ -56,18 +56,30 @@ the process output as a string, or nil if the git command failed."
       (display-message-or-buffer (current-buffer))
       nil)))
 
-(defun git/ext-add-file (file)
+(defun git/ext-add-file (files)
   "Add FILE to stage area."
-  (apply 'git/ext-call-process-display-error "update-index" "--add" "--" file))
+  (apply 'git/ext-call-process-display-error "update-index" "--add" "--" files))
 
-(defun git/ext-auto-push-file (file)
-  "Push file automatically."
+(defun git/ext-commit-file (files)
+  "Commit FILES automatically."
+  (apply 'git/ext-call-process-display-error "commit" files (list "-m \"test\" ")))
+
+(defun git/ext-push ()
+  "Call git push"
+  )
+
+(defun git/ext-auto-push-file (files)
+  "Push FILES automatically."
   (interactive "f")
-  (git/ext-add-file file))
+  (git/ext-add-file files)
+  (git/ext-commit-file files))
 
 (defun git/ext-push-current-file ()
   ""
   (interactive)
-  (git/ext-add-file (buffer-file-name)))
+  (git/ext-add-file (list (buffer-file-name)))
+  (git/ext-commit-file (buffer-file-name)))
+
+
 (provide 'git-ext)
 ;;; git-ext.el ends here
