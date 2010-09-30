@@ -24,6 +24,9 @@
 
 ;;; Code:
 
+(defun git/ext-auto-gen-comment ()
+  (message (format-time-string "\"auto-push %Y-%m-%d %H:%M:%S\"" (current-time))))
+
 (defun git/ext-call-process (buffer &rest args)
   "Wrapper for call-process that sets environment strings."
   (apply #'call-process "git" nil buffer nil args))
@@ -62,11 +65,13 @@ the process output as a string, or nil if the git command failed."
 
 (defun git/ext-commit-file (files)
   "Commit FILES automatically."
-  (apply 'git/ext-call-process-display-error "commit" files (list "-m \"test\" ")))
+  (apply 'git/ext-call-process-display-error "commit" files (list (concat "-m " (git/ext-auto-gen-comment)))))
 
 (defun git/ext-push ()
   "Call git push"
-  (apply 'git/ext-call-process-display-error "push"))
+  (interactive)
+  (when (apply 'git/ext-call-process-display-error "push" nil)
+    (message "Pushing succeeded")))
 
 (defun git/ext-auto-push-file (files)
   "Push FILES automatically."
@@ -75,6 +80,7 @@ the process output as a string, or nil if the git command failed."
   (git/ext-commit-file files)
   (git/ext-push))
 
+;;; Function for testing
 (defun git/ext-push-current-file ()
   "Test function"
   (interactive)
