@@ -66,19 +66,21 @@ the process output as a string, or nil if the git command failed."
 
 (defun git/ext-push ()
   "Call git push"
-  )
+  (apply 'git/ext-call-process-display-error "push"))
 
 (defun git/ext-auto-push-file (files)
   "Push FILES automatically."
   (interactive "f")
   (git/ext-add-file files)
-  (git/ext-commit-file files))
+  (git/ext-commit-file files)
+  (git/ext-push))
 
 (defun git/ext-push-current-file ()
-  ""
+  "Test function"
   (interactive)
   (git/ext-add-file (list (buffer-file-name)))
-  (git/ext-commit-file (buffer-file-name)))
+  (git/ext-commit-file (buffer-file-name))
+  (git/ext-push))
 
 
 (provide 'git-ext)
