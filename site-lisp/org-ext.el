@@ -332,18 +332,21 @@ Move current subtree down and promote it if it has following siblings."
   (call-interactively 'org-return-indent))
 
 (defun org/ext-ctrl-w ()
-  "Cut current subtree if called at a heading line
-If called with cursor not at a heading line, calling `kill-region"
+  "Cut current subtree if called at a heading line and there is no selected region
+If called with cursor not at a heading line or having selected region, calling `kill-region"
   (interactive)
-  (if (org-at-heading-p)
+  (if (and (org-at-heading-p)
+           (not (use-region-p)))
       (call-interactively 'org-cut-subtree)
     (call-interactively 'kill-region)))
 
 (defun org/ext-meta-w ()
-  "Copy current subtree if called at a heading line
-If called with cursor not at a heading line, calling the default command"
+  "Copy current subtree if called at a heading line and there is no selected region
+If called with cursor not at a heading line or having selected region,
+calling the default command"
   (interactive)
-  (if (org-at-heading-p)
+  (if (and (org-at-heading-p)
+	   (not (use-region-p)))
       (call-interactively 'org-copy-subtree)
     (call-interactively 'kill-ring-save)))
 
@@ -360,6 +363,91 @@ If called with cursor not at a heading line, calling the default command"
           (move-to-column col)))
     (call-interactively 'my-duplicate-lines)))
 
+;;;###autoload
+(defun org/ext-tab (&optional arg)
+  "Refined tab key."
+  (interactive "P")
+  (if (use-region-p)
+      (let* ((beg (if (< (region-beginning) (region-end))
+                      (region-beginning)
+                    (region-end)))
+             (end (if (< (region-beginning) (region-end))
+                      (region-end)
+                    (region-beginning)))
+             (beg-lb (save-excursion
+                       (goto-char beg)
+                       (line-beginning-position)))
+             (end-le (save-excursion
+                       (goto-char end)
+                       (line-end-position)))
+             (beg-lb-at-heading (save-excursion
+                                  (goto-char beg-lb)
+                                  (org-at-heading-p))))
+        (if (and (<= (line-beginning-position) beg)
+                 (<= end (line-end-position)))
+            ;; marked region at the same line, delete the marked region and insert tab
+            (progn
+              (delete-region beg end)
+              (insert ?\t))
+          ;; marked region not at the same line
+          (if (and beg-lb-at-heading
+                   (save-excursion
+                     (outline-get-last-sibling)))
+              ;; demote all the marked headings
+              (save-excursion
+                (my-change-mark)
+                (org-do-demote)
+                (setq deactivate-mark nil))
+            ;; check whether there is a heading in the marked resions
+            ;; if there is no heading, shift the marked region right
+            (when (save-excursion
+                    (goto-char beg-lb)
+                    (outline-next-heading)
+                    (> (point) end-le))
+              (move-text-right 1)))))
+    (if (org-at-table-p)
+        (call-interactively 'org-cycle)
+      (insert ?\t))))
+
+;;;###autoload
+(defun org/ext-shifttab (&optional arg)
+  "Refined shift-tab key."
+  (interactive "P")
+  (if (use-region-p)
+      (let* ((beg (if (< (region-beginning) (region-end))
+                      (region-beginning)
+                    (region-end)))
+             (end (if (< (region-beginning) (region-end))
+                      (region-end)
+                    (region-beginning)))
+             (beg-lb (save-excursion
+                       (goto-char beg)
+                       (line-beginning-position)))
+             (end-le (save-excursion
+                       (goto-char end)
+                       (line-end-position)))
+             (beg-lb-at-heading (save-excursion
+                                  (goto-char beg-lb)
+                                  (org-at-heading-p))))
+        
+        ;; if marked region not at the same line and the first marked line is a heading line
+        ;; promote the marked region if possible
+        (if (and beg-lb-at-heading
+                 (save-excursion
+                   (goto-char end-le)
+                   (> (line-beginning-position) beg-lb)))
+            (save-excursion
+              (my-change-mark)
+              (org-do-promote)
+              (setq deactivate-mark nil))
+          ;; if there is no heading in the marked region, shift the region left
+          (when (save-excursion
+                  (goto-char beg-lb)
+                  (outline-next-heading)
+                  (> (point) end-le))
+            (move-text-left 1))))
+    (call-interactively 'org-shifttab)))
+
 (define-key org-mode-map "-" 'org/ext-collapse)
 (define-key org-mode-map "+" 'org/ext-expand)
 (define-key org-mode-map "=" 'org/ext-expand=)
@@ -375,12 +463,15 @@ If called with cursor not at a heading line, calling the default command"
 (define-key org-mode-map [(meta w)] 'org/ext-meta-w)
 (define-key org-mode-map [(meta d)] 'org/ext-meta-d)
 (define-key org-mode-map "\C-c\C-xc" 'org/ext-meta-d)
+(define-key org-mode-map [(tab)] 'org/ext-tab)
 
+(unless (featurep 'xemacs)
+  (org-defkey org-mode-map [S-iso-lefttab]  'org/ext-shifttab))
+(org-defkey org-mode-map [(shift tab)]    'org/ext-shifttab)
+(define-key org-mode-map [backtab] 'org/ext-shifttab)
+
+(defun test-promote ()
+  (interactive)
+  (org-do-promote))
 (provide 'org-ext)
 ;;; org-ext.el ends here
-
-
-
-
-
-

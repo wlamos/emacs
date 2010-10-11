@@ -69,7 +69,6 @@ the process output as a string, or nil if the git command failed."
 
 (defun git/ext-push ()
   "Call git push"
-  (interactive)
   (when (apply 'git/ext-call-process-display-error "push" nil)
     (message "Pushing succeeded")))
 
