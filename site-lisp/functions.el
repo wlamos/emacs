@@ -240,8 +240,7 @@ pagedown."
 
 (defun gtd ()
   (interactive)
-  (find-file "~/_db/org/home.org")
-  )
+  (find-file "~/_db/org/home.org"))
 
 (global-set-keys
  "C-c g"     'gtd

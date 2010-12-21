@@ -3,8 +3,11 @@
 ** TODO Backspace should not alter clipboard buffer
    I can not re-create this problem, a windows thing?
 ** TODO Org-mode, when I Schedule C-c C-s, it eats eof and causes wrap of following line
-   When using dev version, it works at my side, but fails at Larry's side, a windows thing?
+   When using dev version, it works at my side, but fails at Larry's side, a
+   windows thing?
 ** TODO add/commit/push files using git automatically
 ** TODO Ctrl-Backspace
-   Also, I haven't mentioned this anywhere, but if I Ctr-Backspace at the indentation of a line (white-space prepends
-the line). It should delete all white space up to the beginning of the line. Instead, it takes out the beginning of the line and wraps up to the preceding line.
+   Also, I haven't mentioned this anywhere, but if I Ctr-Backspace at the
+   indentation of a line (white-space prepends the line). It should delete all
+   white space up to the beginning of the line. Instead, it takes out the
+   beginning of the line and wraps up to the preceding line.
