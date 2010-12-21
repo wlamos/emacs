@@ -378,9 +378,3 @@ If called with cursor not at a heading line, calling the default command"
 
 (provide 'org-ext)
 ;;; org-ext.el ends here
-
-
-
-
-
-

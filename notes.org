@@ -8,3 +8,4 @@
 ** TODO Ctrl-Backspace
    Also, I haven't mentioned this anywhere, but if I Ctr-Backspace at the indentation of a line (white-space prepends
 the line). It should delete all white space up to the beginning of the line. Instead, it takes out the beginning of the line and wraps up to the preceding line.
+2010110280001100312	20100811	1,120,000.00	已录入
