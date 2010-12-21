@@ -24,6 +24,9 @@
 
 ;;; Code:
 
+(defun git/ext-auto-gen-comment ()
+  (format-time-string "\"auto-push %Y-%m-%d %H:%M:%S\"" (current-time)))
+
 (defun git/ext-call-process (buffer &rest args)
   "Wrapper for call-process that sets environment strings."
   (apply #'call-process "git" nil buffer nil args))
@@ -56,18 +59,32 @@ the process output as a string, or nil if the git command failed."
       (display-message-or-buffer (current-buffer))
       nil)))
 
-(defun git/ext-add-file (file)
+(defun git/ext-add-file (files)
   "Add FILE to stage area."
-  (apply 'git/ext-call-process-display-error "update-index" "--add" "--" file))
+  (apply 'git/ext-call-process-display-error "update-index" "--add" "--" files))
 
-(defun git/ext-auto-push-file (file)
-  "Push file automatically."
-  (interactive "f")
-  (git/ext-add-file file))
+(defun git/ext-commit-file (files)
+  "Commit FILES automatically."
+  (apply 'git/ext-call-process-display-error "commit" files (list (concat "-m " (git/ext-auto-gen-comment)))))
+
+(defun git/ext-push ()
+  "Call git push"
+  (when (apply 'git/ext-call-process-display-error "push" nil)
+    (message "Pushing succeeded")))
+
+(defun git/ext-auto-push-file (files)
+  "Push FILES automatically."
+  (git/ext-add-file files)
+  (git/ext-commit-file files)
+  (git/ext-push))
 
 (defun git/ext-push-current-file ()
-  ""
+  "Commit and push current file automatically"
   (interactive)
-  (git/ext-add-file (buffer-file-name)))
+  (git/ext-add-file (list (buffer-file-name)))
+  (git/ext-commit-file (buffer-file-name))
+  (git/ext-push))
+
+
 (provide 'git-ext)
 ;;; git-ext.el ends here
