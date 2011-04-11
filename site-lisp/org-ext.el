@@ -77,10 +77,11 @@ Just insert an *."
    (and (>= eol eos) (/= eos eoh))))
 
 (defun org/ext-collapse ()
- "Collapse if expanded"
+ "Collapse the heading if it's expanded"
  (interactive)
- (if (and (save-excursion (beginning-of-line) (looking-at outline-regexp))
-         (bolp))
+ (if (and (bolp)
+      (save-excursion (beginning-of-line) (looking-at outline-regexp)))
+     
     ;; At a heading now, check when current heading is expanded
     ;; if it's expanded, Collapse it
     ;; if it's already Collapsed, goto previous sibling
@@ -91,32 +92,29 @@ Just insert an *."
   ;; Not at a heading, just call the globally binded command for -
   (call-interactively (global-key-binding "-"))))
 
-(defun org/ext-expand ()
- "Expand if collapsed."
- (interactive)
- (if (and (save-excursion (beginning-of-line) (looking-at outline-regexp))
-         (bolp))
-     (if (org/ext-heading-collapsed)
-         (progn
-           (org-show-entry)
-           (show-children))
-       (outline-next-visible-heading 1))
-   ;; Not at a heading, just call the globally binded command for +
-   (call-interactively (global-key-binding "+"))))
+(defun org/ext-expand+ ()
+  "Using + to navigate all headings when it's "
+  (interactive)
+  (org/ext-expand-1 "+"))
 
-;; TODO check whether this can be merged with the above function using '+'
 (defun org/ext-expand= ()
- "Expand if collapsed."
- (interactive)
- (if (and (save-excursion (beginning-of-line) (looking-at outline-regexp))
-         (bolp))
-     (if (org/ext-heading-collapsed)
-         (progn
-           (org-show-entry)
-           (show-children))
-       (outline-next-visible-heading 1))
-   ;; Not at a heading, just call the globally binded command for +
-   (call-interactively (global-key-binding "="))))
+  "Using = to navigate all headings"
+  (interactive)
+  (org/ext-expand-1 "="))
+
+(defun org/ext-expand-1 (keys)
+  "
+If KEYS is pressed when point is at the begining of a heading,
+expand current heading if it's collapsed"
+  (if (and (bolp)
+	   (save-excursion (beginning-of-line) (looking-at outline-regexp)))
+      (if (org/ext-heading-collapsed)
+	  (progn
+	    (org-show-entry)
+	    (show-children))
+	(outline-next-visible-heading 1))
+    ;; Not at the beginning of a heading, call the global binding for KEYS
+    (call-interactively (global-key-binding keys))))
 
 (defun org/ext-not-in-heading-content-p ()
   "Return t if current point is in a heading but not in heading content."
@@ -258,7 +256,7 @@ Otherwise, delete one char."
   ""
   (interactive "p")
   (let (beg end folded (beg0 (point)))
-    (if (interactive-p)
+    (if (called-interactively-p 'interactive)
 	(org-back-to-heading nil) ; take what looks like a subtree
       (org-back-to-heading t)) ; take what is really there
     (org-back-over-empty-lines)
@@ -449,7 +447,7 @@ calling the default command"
     (call-interactively 'org-shifttab)))
 
 (define-key org-mode-map "-" 'org/ext-collapse)
-(define-key org-mode-map "+" 'org/ext-expand)
+(define-key org-mode-map "+" 'org/ext-expand+)
 (define-key org-mode-map "=" 'org/ext-expand=)
 (define-key org-mode-map "-" 'org/ext-collapse)
 (define-key org-mode-map [(return)] 'org/ext-return)
