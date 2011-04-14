@@ -22,6 +22,7 @@
 
 ;; How to use it?
 ;; (require 'wl-compile)
+;; (setq wl-filter-out-regexp "systemc\\|boost\\|TLM-2008")
 ;; (setq wl-project-makefile-list
 ;;       '(("/path/to/projectA/" . "/path/to/projectA/makefile/")
 ;;         ("/path/to/projectB/" . "/path/to/projectB/makefile/")))
