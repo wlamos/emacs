@@ -81,7 +81,7 @@ Just insert an *."
  (interactive)
  (if (and (save-excursion (beginning-of-line) (looking-at outline-regexp))
          (bolp))
-    ;; At a heading now, check when current heading is expanded
+    ;; At a heading now, check whether current heading is expanded
     ;; if it's expanded, Collapse it
     ;; if it's already Collapsed, goto previous sibling
     (if (org/ext-heading-expanded)
