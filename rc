@@ -1,3 +1,4 @@
+;; -*- mode: sawfish; -*-
 ;; Load Modules
 (require 'sawfish.wm.commands.launcher)
 (require 'sawfish.wm.state.maximize)
@@ -55,10 +56,10 @@
 
 ;; iconify-all-windows
 
-( define ( iconify-all-windows )
-  ( map-windows iconify-window ) )
+(define (iconify-all-windows)
+  (map-windows iconify-window))
 
-( define-command 'iconify-all-windows iconify-all-windows )
+(define-command 'iconify-all-windows iconify-all-windows)
 
 ;; close-all-windows
 
@@ -167,3 +168,23 @@
 (bind-keys global-keymap "W-F3" '(send-to-workspace 3))
 (bind-keys global-keymap "W-F4" '(send-to-workspace 4))
 (bind-keys global-keymap "W-F5" '(send-to-workspace 5))
+
+;;; switch to last workspace or window
+(define window-or-workspace? 'window)
+(add-hook 'leave-workspace-hook
+          (lambda (current)
+            (setq workspace-last current)
+            (setq window-or-workspace? 'workspace)))
+
+(add-hook 'focus-out-hook
+          (lambda (current)
+            (setq window-last current)
+            (setq window-or-workspace? 'window)))
+
+(bind-keys global-keymap
+    "W-`"
+    (lambda ()
+      (if (eq window-or-workspace? 'workspace)
+          (select-workspace workspace-last)
+        (display-window window-last))))
+
