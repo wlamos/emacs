@@ -1,0 +1,169 @@
+;; Load Modules
+(require 'sawfish.wm.commands.launcher)
+(require 'sawfish.wm.state.maximize)
+(require 'sawfish.wm.ext.match-window)
+(require 'sawfish.wm.ext.window-history)
+(require 'sawfish.wm.ext.shade-hover)
+(require 'sawfish.wm.util.prompt)
+(require 'sawfish.wm.util.selection)
+(require 'sawfish.wm.custom)
+(require 'sawfish.wm.tabs.tab)
+(require 'sawfish.wm.frames)
+(require 'sawfish.wm.ext.auto-raise)
+(require 'sawfish.wm.ext.audio-events)
+(require 'sawfish.wm.util.play-audio)
+(require 'sawfish.wm.commands.jump-or-exec)
+(require 'sawfish.wm.ext.pager)
+(require 'sawfish.wm.commands.x-cycle)
+(require 'sawfish.wm.ext.workspace-grid)
+(require 'sawfish.wm.viewport)
+(require 'rep.io.timers)
+(require 'sawfish.wm.menus)
+
+;; display-message-with-timeout
+(define (display-message-with-timeout message timeout)
+  (display-message message)
+  (make-timer (lambda () (display-message nil)) timeout))
+
+;; display-ws-name
+
+(defcustom display-ws-name-on-switch nil
+  "Whether to display workspace name upon switch"
+  :type boolean
+  :group workspace
+  :after-set (lambda () (display-ws-name-setter)))
+
+(defcustom display-ws-name-timeout 2
+  "How long to display workspace name"
+  :type number
+  :group workspace)
+
+(define (display-workspace-name)
+  (display-message-with-timeout
+   (format nil "Now on Workspace: %s"
+           (or (nth current-workspace workspace-names)
+               (format nil (_ "Workspace %d") (1+ current-workspace))))
+   display-ws-name-timeout))
+
+(define (display-ws-name-setter)
+  (if (eq display-ws-name-on-switch 't)
+      (add-hook 'enter-workspace-hook display-workspace-name)
+    (remove-hook 'enter-workspace-hook display-workspace-name)))
+
+(define-command 'display-workspace-name display-workspace-name #:class 'default)
+
+
+;; iconify-all-windows
+
+( define ( iconify-all-windows )
+  ( map-windows iconify-window ) )
+
+( define-command 'iconify-all-windows iconify-all-windows )
+
+;; close-all-windows
+
+(define (close-all-windows)
+  (map-windows delete-window))
+
+(define-command 'close-all-windows close-all-windows)
+
+;; Global Keybindings
+(bind-keys global-keymap
+	   "W-C-d" 'show-desktop
+	   "W-C-s" 'hide-desktop
+	   "W-C-i" 'iconfiy-all-windows
+	   "W-t" `(jump-or-exec "Terminal" "gnome-terminal")
+	   "W-e" `(jump-or-exec "^Emacs@" "emacs")
+	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
+	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
+	   "W-s" `(jump-or-exec "Skype" "skype")
+	   "W-F10" `(jump-or-exec "pwrgrp100" "gnome-terminal")
+	   "W-F12" `(jump-or-exec "power102" "gnome-terminal")
+	   "C-S-q" 'close-all-windows
+	   )
+
+;; Window Keybindings
+
+(unbind-keys window-keymap "Button1-Click")
+
+;; Rootwindow Keybindings
+
+(bind-keys root-window-keymap
+	   "Button2-Click" 'popup-window-list-menu
+	   "Button3-Click" 'popup-root-menu )
+
+;;  Application Keymacros
+(define apps-keymap (make-keymap))
+(bind-keys global-keymap "W-a" apps-keymap)
+
+(bind-keys apps-keymap
+	   "m" `(jump-or-exec "Evolution" "evolution")
+	   "q" `(jump-or-exec "QTerm" "qterm")
+	   "v" `(jump-or-exec "VirtualBox" "VirtualBox")
+	   "p" `(jump-or-exec "PuTTY$" "putty")
+	   )
+
+;; Workspace Keymacros
+
+(define ws-keymap (make-keymap))
+(bind-keys global-keymap "W-w" ws-keymap)
+
+(bind-keys ws-keymap
+	   "Left" workspace-left
+	   "Up" workspace-up
+	   "Right" workspace-right
+	   "Down" workspace-down)
+
+;; Window Keybindings
+(bind-keys window-keymap
+	   "W-S-c" 'delete-window-safely
+	   "C-W-m" 'maximize-window
+	   "C-W-w" 'unmaximize-window
+	   "C-W-s" 'shade-window
+	   "C-W-u" 'unshade-window
+	   "C-W-i" 'iconify-window
+	   "C-W-r" 'raise-window
+	   "C-W-l" 'lower-window
+	   "C-W-R" 'raise-window-depth
+	   "C-W-L" 'lower-window-depth
+	   "C-W-f" 'maximize-window-fullscreen
+	   "C-W-v" 'maximize-window-vertically
+	   "C-W-h" 'maximize-window-horizontally
+	   "C-W-y" 'move-window-interactively
+	   "C-W-x" 'resize-window-interactively
+	   "C-S-r" 'rename-window
+	   "C-S-c" 'move-window-center
+	   ;; "C-S-h" 'halve-window-size
+	   ;; "C-S-d" 'double-window-size
+	   ;; "C-S-e" 'resize-window-half-screen-height
+	   ;; "C-S-w" 'resize-window-half-screen-width 
+	   )
+
+;; Display Workspace Name
+
+( defvar-setq display-ws-name-on-switch t )
+( defvar-setq display-ws-name-timeout 3 )
+
+( display-ws-name-setter )
+
+;; XTerm & Browser
+( defvar-setq xterm-program "gnome-terminal" )
+( defvar-setq browser-program "firefox" )
+
+
+;; Workapaces
+(defvar-setq workspace-names '("Work" "Web" "Remote" "Lisp" "Misc"))
+
+;; change to corresponding workspace
+(bind-keys global-keymap "W-1" '(activate-workspace 1))
+(bind-keys global-keymap "W-2" '(activate-workspace 2))
+(bind-keys global-keymap "W-3" '(activate-workspace 3))
+(bind-keys global-keymap "W-4" '(activate-workspace 4))
+(bind-keys global-keymap "W-5" '(activate-workspace 5))
+
+;; send an window to worksapce
+(bind-keys global-keymap "W-F1" '(send-to-workspace 1))
+(bind-keys global-keymap "W-F2" '(send-to-workspace 2))
+(bind-keys global-keymap "W-F3" '(send-to-workspace 3))
+(bind-keys global-keymap "W-F4" '(send-to-workspace 4))
+(bind-keys global-keymap "W-F5" '(send-to-workspace 5))
