@@ -55,7 +55,6 @@
 
 
 ;; iconify-all-windows
-
 (define (iconify-all-windows)
   (map-windows iconify-window))
 
@@ -68,21 +67,35 @@
 
 (define-command 'close-all-windows close-all-windows)
 
+;; Create a window with name
+(defvar-setq last-created-window nil)
+(add-hook 'after-add-window-hook
+	  (lambda (current)
+	    (setq last-created-window current)))
+
+(define (create-power102)
+  (system "gnome-terminal &")
+  (make-timer (lambda ()
+		(rename-window last-created-window "power102")) 2))
+
+(define-command 'create-power102 create-power102)
+
 ;; Global Keybindings
 (bind-keys global-keymap
+	   "W-C-r" 'restart
+	   "W-C-F12" 'quit
 	   "W-C-d" 'show-desktop
 	   "W-C-s" 'hide-desktop
 	   "W-C-z" '(system "xscreensaver-command -lock &")
 	   "W-C-i" 'iconfiy-all-windows
-	   "W-t" `(jump-or-exec "Terminal" "gnome-terminal")
+	   "W-t" `(jump-or-exec "^Terminal" "gnome-terminal")
 	   "W-e" `(jump-or-exec "^Emacs@" "emacs")
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
 	   "W-s" `(jump-or-exec "Skype" "skype")
-	   "W-F10" `(jump-or-exec "pwrgrp100" "gnome-terminal")
-	   "W-F12" `(jump-or-exec "power102" "gnome-terminal")
-	   "C-S-q" 'close-all-windows
-	   )
+	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
+	   "W-F12" `(jump-or-exec "^power102" create-power102)
+	   "C-S-q" 'close-all-windows)
 
 ;; Window Keybindings
 
@@ -99,7 +112,7 @@
 (bind-keys global-keymap "W-a" apps-keymap)
 
 (bind-keys apps-keymap
-	   "m" `(jump-or-exec "Evolution" "evolution")
+	   "m" `(jump-or-exec "Evolution$" "evolution")
 	   "q" `(jump-or-exec "QTerm" "qterm")
 	   "v" `(jump-or-exec "VirtualBox" "VirtualBox")
 	   "p" `(jump-or-exec "PuTTY$" "putty")
@@ -124,7 +137,7 @@
 	   "C-W-s" 'shade-window
 	   "C-W-u" 'unshade-window
 	   "C-W-i" 'iconify-window
-	   "C-W-r" 'raise-window
+;	   "C-W-r" 'raise-window
 	   "C-W-l" 'lower-window
 	   "C-W-R" 'raise-window-depth
 	   "C-W-L" 'lower-window-depth
@@ -212,3 +225,26 @@
 (bind-keys global-keymap "C-M-Right" '(shove-window 'right))
 (bind-keys global-keymap "C-M-Up" '(shove-window 'up))
 (bind-keys global-keymap "C-M-Down" '(shove-window 'down))
+
+;; Sawfish Pager
+
+( defvar-setq pager-shrink-factor 24 )
+( defvar-setq pager-warp-cursor t )
+( defvar-setq pager-hatch-windows nil )
+( defvar-setq pager-tooltips-enabled nil )
+( defvar-setq pager-X-current-viewport t )
+( defvar-setq pager-workspaces-per-column 2 )
+( defvar-setq pager-output-stream t)
+( defvar-setq pager-select-type 'workspace )
+( defvar-setq pager-autohide-enable t )
+( defvar-setq pager-unhide-when-flip t )
+( add-hook 'after-initialization-hook pager t )
+
+;; Animation [Yep, Sawfish Maintainers also are Human Beeings]
+
+( defvar-setq default-window-animator 'wireframe )
+( defvar-setq anim-outline-icon-coords '( 0 . 0 ) )
+( defvar-setq anim-outline-steps 45 )
+( defvar-setq anim-outline-delay 15 )
+( defvar-setq move-outline-mode 'cross )
+( defvar-setq resize-outline-mode 'elliptical )
