@@ -21,7 +21,6 @@
 (require 'rep.io.timers)
 (require 'sawfish.wm.menus)
 
-;; display-message-with-timeout
 (define (display-message-with-timeout message timeout)
   (display-message message)
   (make-timer (lambda () (display-message nil)) timeout))
@@ -51,7 +50,6 @@
     (remove-hook 'enter-workspace-hook display-workspace-name)))
 
 (define-command 'display-workspace-name display-workspace-name #:class 'default)
-
 
 ;; view-clipboard
 
@@ -114,13 +112,6 @@
 		(rename-window last-created-window name)) 2))
 (define-command 'wl-exec-with-name wl-exec-with-name)
 
-(define (create-power102)
-  (system "gnome-terminal &")
-  (make-timer (lambda ()
-		(rename-window last-created-window "power102")) 2))
-
-(define-command 'create-power102 create-power102)
-
 ;; get-frame-width
 
 ( define ( get-frame-width w )
@@ -156,6 +147,11 @@
 ( define-command 'resize-window-half-screen-height resize-window-half-screen-height #:spec "%W" )
 
 ;; Global Keybindings
+;; "W-" keys should be only for those used heavily keys
+;; And the W-C-/W-S- keys should be consistent
+;; - control other things
+;; - control windows
+;; - control workspaces
 (bind-keys global-keymap
 	   "W-C-r" 'restart
 	   "W-C-F12" 'quit
@@ -171,28 +167,28 @@
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
-	   "W-F11" `(jump-or-exec "^power102-shell" (wl-exec-with-name "gnome-terminal" "power102-shell"))
-	   "W-F12" `(jump-or-exec "^power102-emacs" (wl-exec-with-name "gnome-terminal" "power102-emacs"))
+	   "W-F11" `(jump-or-exec "shell@power102" '(wl-exec-with-name "gnome-terminal" "shell@power102"))
+	   "W-F12" `(jump-or-exec "emacs@power102" '(wl-exec-with-name "gnome-terminal" "emacs@power102"))
 	   "C-S-q" 'close-all-windows)
 
 ;; Window Keybindings
-
 (unbind-keys window-keymap "Button1-Click")
 
 ;; Rootwindow Keybindings
-
 (bind-keys root-window-keymap
 	   "Button2-Click" 'popup-window-list-menu
 	   "Button3-Click" 'popup-root-menu )
 
-;;  Application Keymacros
+;; Application Keymacros
+;; All application keys start with W-a, a means application
 (define apps-keymap (make-keymap))
 (bind-keys global-keymap "W-a" apps-keymap)
 
 (bind-keys apps-keymap
 	   "m" `(jump-or-exec "Evolution$" "evolution")
 	   "q" `(jump-or-exec "QTerm" "qterm")
-	   "v" `(jump-or-exec "VirtualBox" "VirtualBox")
+	   "v" `(jump-or-exec "Remote Desktop Viewer" "vinagre") 	   ;; VNC viewer
+	   "V" `(jump-or-exec "VirtualBox" "VirtualBox")
 	   "p" `(jump-or-exec "PuTTY" "putty")
 	   "s" `(jump-or-exec "Skype" "skype")
 	   "a" `(jump-or-exec "Adobe Reader$" "acroread")
@@ -207,16 +203,6 @@
 	   "Up" workspace-up
 	   "Right" workspace-right
 	   "Down" workspace-down)
-
-;; Viewport keymacros
-;; ( define vp-keymap ( make-keymap ) )
-;; ( bind-keys global-keymap "W-v" vp-keymap )
-
-;; ( bind-keys vp-keymap
-;;   "Left" '( move-viewport -1 0 )
-;;   "Up" '( move-viewport 0 -1 )
-;;   "Right" '( move-viewport 1 0 )
-;;   "Down" '( move-viewport 0 1 ) )
 
 ;; Window Keybindings
 (bind-keys window-keymap
@@ -310,25 +296,10 @@
     (unless no-focus
       (display-window win))))
 
-
 (bind-keys global-keymap "C-M-Left" '(shove-window 'left))
 (bind-keys global-keymap "C-M-Right" '(shove-window 'right))
 (bind-keys global-keymap "C-M-Up" '(shove-window 'up))
 (bind-keys global-keymap "C-M-Down" '(shove-window 'down))
-
-;; Sawfish Pager
-
-;; ( defvar-setq pager-shrink-factor 24 )
-;; ( defvar-setq pager-warp-cursor t )
-;; ( defvar-setq pager-hatch-windows nil )
-;; ( defvar-setq pager-tooltips-enabled nil )
-;; ( defvar-setq pager-X-current-viewport t )
-;; ( defvar-setq pager-workspaces-per-column 2 )
-;; ( defvar-setq pager-output-stream t)
-;; ( defvar-setq pager-select-type 'workspace )
-;; ( defvar-setq pager-autohide-enable t )
-;; ( defvar-setq pager-unhide-when-flip t )
-;; ( add-hook 'after-initialization-hook pager t )
 
 ;; Animation [Yep, Sawfish Maintainers also are Human Beeings]
 
@@ -404,13 +375,4 @@ Frame Height: \t\t %s pixels
 
 ( define-command 'window-snooper window-snooper)
 
-( bind-keys global-keymap
-  "C-S-s" 'window-snooper )
-
-;; Viewports
-
-;; ( defvar-setq viewport-dimensions '( 1 . 1 ) )
-;; ( defvar-setq viewport-minimum-dimensions '( 1 . 1 ) )
-;; ( defvar-setq uniconify-to-current-viewport t )
-;; ( defvar-setq viewport-boundary-mode 'dynamic )
-;; ( defvar-setq scroll-viewport-steps 45 )
+( bind-keys global-keymap "C-S-s" 'window-snooper )
