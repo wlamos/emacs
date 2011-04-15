@@ -251,21 +251,25 @@ already fontified."
              ;; define in your running instance of sawfish. It would also
              ;; mean that you'd have to have sawfish running at the time
              ;; that this constant is defined.
-             (list 
-              "define" "define-command-args" "define-command-to-screen"
-              "define-custom-deserializer" "define-custom-serializer"
-              "define-custom-setter" "define-datum-printer"
-              "define-file-handler" "define-focus-mode"
-              "define-frame-class" "define-frame-type-mapper"
-              "define-interface" "define-linear-viewport-commands"
-              "define-match-window-formatter"
-              "define-match-window-group" "define-match-window-property"
-              "define-match-window-setter" "define-parse"
-              "define-placement-mode" "define-record-type"
-              "define-record-discloser" "define-scan-body"
-              "define-scan-form" "define-scan-internals"
-              "define-structure" "define-value"
-              "define-window-animator"))
+             (list
+	      "define-custom-setter" "define-window-animator"
+	      "define-wm-spec-window-state" "define-record-discloser"
+	      "define-file-handler" "define-wm-spec-window-type"
+	      "define-scan-internals" "define-window-outliner"
+	      "define-placement-mode" "define-record-type"
+	      "define-datum-printer" "define-bound-vars"
+	      "define-structures" "define-structure"
+	      "define-custom-serializer" "define-match-window-setter"
+	      "define-frame-class" "define-match-window-group"
+	      "define-match-window-formatter" "define-cycle-command"
+	      "define-scan-form" "define-command" "define-focus-mode"
+	      "define-commands" "define-structure-alias"
+	      "define-cycle-command-pair" "define-match-window-property"
+	      "define-command-to-screen" "define-interface"
+	      "define-custom-deserializer" "define-macroexpand-1"
+	      "define-macro" "define-window-strut" "define-command-gaol"
+	      "define-scan-body" "define-gaol-structure" "define"
+	      "define-parse" "define-special-variable" "define-frame-type-mapper"))
             "\\)\\>[ \t'(]*\\(\\sw+\\)?")
   "List of define-structures known by Sawfish.")
 
@@ -911,6 +915,7 @@ returned."
 (define-key sawfish-mode-map [(control c) (control h) ?v]          #'sawfish-describe-variable)
 (define-key sawfish-mode-map [(control c) (control h) (control v)] #'sawfish-info-variable)
 (define-key sawfish-mode-map [(meta tab)]                          #'sawfish-complete-symbol)
+(define-key sawfish-mode-map [(tab)]                          #'sawfish-complete-symbol)
 (define-key sawfish-mode-map [(control c) (control h) ?i]          #'sawfish-info)
 (define-key sawfish-mode-map [(control meta :)]                    #'eval-expression)
 
