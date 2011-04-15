@@ -27,7 +27,6 @@
   (make-timer (lambda () (display-message nil)) timeout))
 
 ;; display-ws-name
-
 (defcustom display-ws-name-on-switch nil
   "Whether to display workspace name upon switch"
   :type boolean
@@ -54,6 +53,28 @@
 (define-command 'display-workspace-name display-workspace-name #:class 'default)
 
 
+;; view-clipboard
+
+(defcustom clipboard-preview-clip-length 600
+  "Maximum length of Clipboard Preview"
+  :type number
+  :group misc)
+
+(defcustom clipboard-preview-timeout 15
+  "How long to display Clipboard Preview"
+  :type number
+  :group misc)
+
+(define (view-clipboard)
+  "Show the contents of the clipboard in a message window"
+  (let ((c (x-get-selection 'PRIMARY)))
+    (if (> (length c) 0)
+        (if (< (length c) clipboard-preview-clip-length)
+            (display-message-with-timeout c clipboard-preview-timeout)
+          (display-message-with-timeout
+           (format nil "%s ..." (substring c 0 clipboard-preview-clip-length))
+           clipboard-preview-timeout)))))
+
 ;; iconify-all-windows
 (define (iconify-all-windows)
   (map-windows iconify-window))
@@ -67,11 +88,31 @@
 
 (define-command 'close-all-windows close-all-windows)
 
+;; Window Matchers
+
+( add-window-matcher '( ( WM_CLASS . "^Sawfishpager/sawfishpager$" ) )
+       '( ( position . north-east )
+          ( fixed-positon . t )
+          ( never-maximize . t )
+          ( never-iconify . t )
+          ( frame-type . none )
+          ( cycle-skip . t )
+          ( window-list-skip . t )
+          ( sticky . t )
+          ( sticky-viewport . t )
+	  ( avoid . () ) ) )
+
 ;; Create a window with name
 (defvar-setq last-created-window nil)
 (add-hook 'after-add-window-hook
 	  (lambda (current)
 	    (setq last-created-window current)))
+
+(define (wl-exec-with-name cmd name)
+  (system (concat cmd " &"))
+  (make-timer (lambda ()
+		(rename-window last-created-window name)) 2))
+(define-command 'wl-exec-with-name wl-exec-with-name)
 
 (define (create-power102)
   (system "gnome-terminal &")
@@ -80,21 +121,58 @@
 
 (define-command 'create-power102 create-power102)
 
+;; get-frame-width
+
+( define ( get-frame-width w )
+  (let ((dims (window-dimensions w))
+	(frame (window-frame-dimensions w)))
+    (- (car frame) (car dims))))
+
+;; get-frame-height
+
+( define ( get-frame-height w )
+  (let ((dims (window-dimensions w))
+	(frame (window-frame-dimensions w)))
+    (- (cdr frame) (cdr dims))))
+
+;; resize-window-half-screen-width
+
+( define ( resize-window-half-screen-width w )
+  (let ((height (cdr (window-dimensions w)))
+	(half-width (/ (screen-width) 2))
+	(frame-width (get-frame-width w)))
+  (resize-window-with-hints* w (- half-width frame-width) frame-width)))
+
+( define-command 'resize-window-half-screen-width resize-window-half-screen-width #:spec "%W" )
+
+;; resize-window-half-screen-height
+
+( define ( resize-window-half-screen-height w )
+  (let ((width (car (window-dimensions w)))
+	(half-height (/ (screen-height) 2))
+	(frame-height (get-frame-height w)))
+    (resize-window-with-hints* w width (- half-height frame-height))))
+
+( define-command 'resize-window-half-screen-height resize-window-half-screen-height #:spec "%W" )
+
 ;; Global Keybindings
 (bind-keys global-keymap
 	   "W-C-r" 'restart
 	   "W-C-F12" 'quit
+	   "W-C-a" 'view-clipboard
 	   "W-C-d" 'show-desktop
 	   "W-C-s" 'hide-desktop
 	   "W-C-z" '(system "xscreensaver-command -lock &")
 	   "W-C-i" 'iconfiy-all-windows
+	   "W-TAB" 'cycle-windows
+	   "C-TAB" 'cycle-windows-backwards
 	   "W-t" `(jump-or-exec "^Terminal" "gnome-terminal")
 	   "W-e" `(jump-or-exec "^Emacs@" "emacs")
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
-	   "W-s" `(jump-or-exec "Skype" "skype")
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
-	   "W-F12" `(jump-or-exec "^power102" create-power102)
+	   "W-F11" `(jump-or-exec "^power102-shell" (wl-exec-with-name "gnome-terminal" "power102-shell"))
+	   "W-F12" `(jump-or-exec "^power102-emacs" (wl-exec-with-name "gnome-terminal" "power102-emacs"))
 	   "C-S-q" 'close-all-windows)
 
 ;; Window Keybindings
@@ -115,11 +193,12 @@
 	   "m" `(jump-or-exec "Evolution$" "evolution")
 	   "q" `(jump-or-exec "QTerm" "qterm")
 	   "v" `(jump-or-exec "VirtualBox" "VirtualBox")
-	   "p" `(jump-or-exec "PuTTY$" "putty")
+	   "p" `(jump-or-exec "PuTTY" "putty")
+	   "s" `(jump-or-exec "Skype" "skype")
+	   "a" `(jump-or-exec "Adobe Reader$" "acroread")
 	   )
 
 ;; Workspace Keymacros
-
 (define ws-keymap (make-keymap))
 (bind-keys global-keymap "W-w" ws-keymap)
 
@@ -128,6 +207,16 @@
 	   "Up" workspace-up
 	   "Right" workspace-right
 	   "Down" workspace-down)
+
+;; Viewport keymacros
+;; ( define vp-keymap ( make-keymap ) )
+;; ( bind-keys global-keymap "W-v" vp-keymap )
+
+;; ( bind-keys vp-keymap
+;;   "Left" '( move-viewport -1 0 )
+;;   "Up" '( move-viewport 0 -1 )
+;;   "Right" '( move-viewport 1 0 )
+;;   "Down" '( move-viewport 0 1 ) )
 
 ;; Window Keybindings
 (bind-keys window-keymap
@@ -148,14 +237,13 @@
 	   "C-W-x" 'resize-window-interactively
 	   "C-S-r" 'rename-window
 	   "C-S-c" 'move-window-center
-	   ;; "C-S-h" 'halve-window-size
-	   ;; "C-S-d" 'double-window-size
-	   ;; "C-S-e" 'resize-window-half-screen-height
-	   ;; "C-S-w" 'resize-window-half-screen-width 
+	   "C-S-h" 'halve-window-size
+	   "C-S-d" 'double-window-size
+	   "C-S-e" 'resize-window-half-screen-height
+	   "C-S-w" 'resize-window-half-screen-width 
 	   )
 
 ;; Display Workspace Name
-
 (defvar-setq display-ws-name-on-switch t)
 (defvar-setq display-ws-name-timeout 3)
 
@@ -167,7 +255,7 @@
 
 
 ;; Workapaces
-(defvar-setq workspace-names '("Work" "Web" "Remote" "Lisp" "Misc"))
+(defvar-setq workspace-names '("Work" "Web" "Remote" "Lisp" "Media" "Misc"))
 
 ;; change to corresponding workspace
 (bind-keys global-keymap "W-1" '(activate-workspace 1))
@@ -175,6 +263,7 @@
 (bind-keys global-keymap "W-3" '(activate-workspace 3))
 (bind-keys global-keymap "W-4" '(activate-workspace 4))
 (bind-keys global-keymap "W-5" '(activate-workspace 5))
+(bind-keys global-keymap "W-6" '(activate-workspace 6))
 
 ;; send an window to worksapce
 (bind-keys global-keymap "W-F1" '(send-to-workspace 1))
@@ -182,6 +271,7 @@
 (bind-keys global-keymap "W-F3" '(send-to-workspace 3))
 (bind-keys global-keymap "W-F4" '(send-to-workspace 4))
 (bind-keys global-keymap "W-F5" '(send-to-workspace 5))
+(bind-keys global-keymap "W-F6" '(send-to-workspace 6))
 
 ;;; switch to last workspace or window using W-`
 (define window-or-workspace? 'window)
@@ -228,17 +318,17 @@
 
 ;; Sawfish Pager
 
-( defvar-setq pager-shrink-factor 24 )
-( defvar-setq pager-warp-cursor t )
-( defvar-setq pager-hatch-windows nil )
-( defvar-setq pager-tooltips-enabled nil )
-( defvar-setq pager-X-current-viewport t )
-( defvar-setq pager-workspaces-per-column 2 )
-( defvar-setq pager-output-stream t)
-( defvar-setq pager-select-type 'workspace )
-( defvar-setq pager-autohide-enable t )
-( defvar-setq pager-unhide-when-flip t )
-( add-hook 'after-initialization-hook pager t )
+;; ( defvar-setq pager-shrink-factor 24 )
+;; ( defvar-setq pager-warp-cursor t )
+;; ( defvar-setq pager-hatch-windows nil )
+;; ( defvar-setq pager-tooltips-enabled nil )
+;; ( defvar-setq pager-X-current-viewport t )
+;; ( defvar-setq pager-workspaces-per-column 2 )
+;; ( defvar-setq pager-output-stream t)
+;; ( defvar-setq pager-select-type 'workspace )
+;; ( defvar-setq pager-autohide-enable t )
+;; ( defvar-setq pager-unhide-when-flip t )
+;; ( add-hook 'after-initialization-hook pager t )
 
 ;; Animation [Yep, Sawfish Maintainers also are Human Beeings]
 
@@ -248,3 +338,79 @@
 ( defvar-setq anim-outline-delay 15 )
 ( defvar-setq move-outline-mode 'cross )
 ( defvar-setq resize-outline-mode 'elliptical )
+
+;;; Window Snooping
+
+(defvar window-snooper-timeout 15)
+
+(define (window-snooper)
+    "Display information about the focused window."
+    (let* ((w (input-focus))
+           (net-wm-name (get-x-text-property w '_NET_WM_NAME))
+           (wm-class (get-x-text-property w 'WM_CLASS))
+           (net-wm-icon-name (get-x-text-property w '_NET_WM_ICON_NAME))
+           (wm-window-role (get-x-text-property w 'WM_WINDOW_ROLE))
+           (wm-locale-name (get-x-text-property w 'WM_LOCALE_NAME))
+           (pos (window-position w))
+           (dims (window-dimensions w))
+           (frame-dims (window-frame-dimensions w))
+           (window-x (car pos))
+           (window-y (cdr pos))
+           (window-width (car dims))
+           (window-height (cdr dims))
+           (frame-width (- (car frame-dims) window-width))
+           (frame-height (- (cdr frame-dims) window-height)))
+
+      (display-message-with-timeout
+       (format nil
+               "
+About the currently focused window:
+===================================
+
+_NET_WM_NAME: \t\t %s
+WM_CLASS: \t\t\t %s
+_NET_WM_ICON_NAME: \t %s
+WM_WINDOW_ROLE: \t %s
+WM_LOCALE_NAME: \t %s
+Window X: \t\t\t %s pixels
+Window Y: \t\t\t %s pixels
+Window Width: \t\t %s pixels
+Window Height: \t\t %s pixels
+Frame Width: \t\t\t %s pixels
+Frame Height: \t\t %s pixels
+
+===================================\n"
+               (if net-wm-name
+                   (aref net-wm-name 0)
+                 "")
+               (concat (aref wm-class 1)
+                       "/"
+                       (aref wm-class 0))
+               (if net-wm-icon-name
+                   (aref net-wm-icon-name 0)
+                 "")
+               (if wm-window-role
+                   (aref wm-window-role 0)
+                 "")
+               (if wm-locale-name
+                   (aref wm-locale-name 0)
+                 "")
+               window-x
+               window-y
+               window-width
+               window-height
+               frame-width
+               frame-height) window-snooper-timeout)))
+
+( define-command 'window-snooper window-snooper)
+
+( bind-keys global-keymap
+  "C-S-s" 'window-snooper )
+
+;; Viewports
+
+;; ( defvar-setq viewport-dimensions '( 1 . 1 ) )
+;; ( defvar-setq viewport-minimum-dimensions '( 1 . 1 ) )
+;; ( defvar-setq uniconify-to-current-viewport t )
+;; ( defvar-setq viewport-boundary-mode 'dynamic )
+;; ( defvar-setq scroll-viewport-steps 45 )
