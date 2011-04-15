@@ -138,15 +138,24 @@
 
 ;; resize-window-half-screen-height
 
-( define ( resize-window-half-screen-height w )
+(define ( resize-window-half-screen-height w )
   (let ((width (car (window-dimensions w)))
 	(half-height (/ (screen-height) 2))
 	(frame-height (get-frame-height w)))
     (resize-window-with-hints* w width (- half-height frame-height))))
 
-( define-command 'resize-window-half-screen-height resize-window-half-screen-height #:spec "%W" )
+(define-command 'resize-window-half-screen-height resize-window-half-screen-height #:spec "%W")
+
+(define (my-toggle-show-hide-desktop)
+  "Toggle showing or hiding desktop."
+  (if (showing-desktop-p)
+      (hide-desktop)
+    (show-desktop)))
+
+(define-command 'my-toggle-show-hide-desktop my-toggle-show-hide-desktop)
 
 ;; Global Keybindings
+;; FIXME
 ;; "W-" keys should be only for those used heavily keys
 ;; And the W-C-/W-S- keys should be consistent
 ;; - control other things
@@ -156,14 +165,13 @@
 	   "W-C-r" 'restart
 	   "W-C-F12" 'quit
 	   "W-C-a" 'view-clipboard
-	   "W-C-d" 'show-desktop
-	   "W-C-s" 'hide-desktop
+	   "W-C-d" 'my-toggle-show-hide-desktop
 	   "W-C-z" '(system "xscreensaver-command -lock &")
 	   "W-C-i" 'iconfiy-all-windows
 	   "W-TAB" 'cycle-windows
 	   "C-TAB" 'cycle-windows-backwards
 	   "W-t" `(jump-or-exec "^Terminal" "gnome-terminal")
-	   "W-e" `(jump-or-exec "^Emacs@" "emacs")
+	   "W-e" `(jump-or-exec "^Emacs" "emacs")
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
@@ -376,3 +384,25 @@ Frame Height: \t\t %s pixels
 ( define-command 'window-snooper window-snooper)
 
 ( bind-keys global-keymap "C-S-s" 'window-snooper )
+
+;;  Some programs that are used commonly
+(defvar-setq my-exec-history '("emacs"
+			       "gnome-terminal"
+			       "qterm"
+			       "gimp"
+			       "evince"
+			       "acroread"
+			       "firefox"
+			       "google-chrome"
+			       "stardict")
+  "List of previously executed items.")
+
+(define (my-prompt-for-exec)
+  (let ((e (prompt-from-list my-exec-history "Execute: " nil t)))
+    (delete e my-exec-history)      
+    (when (and e (not (string= "" e)))
+      (setq my-exec-history (append (list e) my-exec-history))
+      (system (concat e "&")))))
+
+(define-command 'my-prompt-for-exec my-prompt-for-exec)
+(bind-keys global-keymap "W-p" 'my-prompt-for-exec)
