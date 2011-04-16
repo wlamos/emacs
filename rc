@@ -257,6 +257,7 @@
 	   "p" `(jump-or-exec "PuTTY" "putty")
 	   "s" `(jump-or-exec "Skype" "skype")
 	   "a" `(jump-or-exec "Adobe Reader$" "acroread")
+	   "g" `(jump-or-exec "Google Chrome" "google-chrome")
 	   )
 
 ;; Window Keybindings
@@ -402,7 +403,8 @@ Frame Height: \t\t %s pixels
 			       "acroread"
 			       "firefox"
 			       "google-chrome"
-			       "stardict")
+			       "stardict"
+			       "shutter")
   "List of previously executed items.")
 
 (define (my-prompt-for-exec)
@@ -484,7 +486,7 @@ Return nil if STR doesn't exist in LST."
 
 (defvar-setq my-dispatch-window-list
   '(("Chat" . ("Skype/skype" "Pidgin/Pidgin"))
-    ("Web"  . ("Firefox/Navigator " "Qterm/qterm"))
+    ("Web"  . ("Firefox/Navigator " "Qterm/qterm" "Google-chrome/google-chrome"))
     ("Mail" . ("Evolution/evolution"))
     ("Work" . "Putty/putty")))
 
