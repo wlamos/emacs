@@ -4,6 +4,7 @@
 
 ;; Author: Michael Albinus <michael.albinus@gmx.de>
 ;; Keywords: comm, processes
+;; Package: tramp
 
 ;; This file is part of GNU Emacs.
 
@@ -22,11 +23,13 @@
 
 ;;; Commentary:
 
-;; Tramp's main Emacs version for development is GNU Emacs 23.  This
-;; package provides compatibility functions for GNU Emacs 21, GNU
-;; Emacs 22 and XEmacs 21.4+.
+;; Tramp's main Emacs version for development is GNU Emacs 24.  This
+;; package provides compatibility functions for GNU Emacs 22, GNU
+;; Emacs 23 and XEmacs 21.4+.
 
 ;;; Code:
+
+(require 'tramp-loaddefs)
 
 (eval-when-compile
 
@@ -35,42 +38,41 @@
 
 (eval-and-compile
 
+  (require 'advice)
   (require 'custom)
+  (require 'format-spec)
+
+  ;; As long as password.el is not part of (X)Emacs, it shouldn't be
+  ;; mandatory.
+  (if (featurep 'xemacs)
+      (load "password" 'noerror)
+    (or (require 'password-cache nil 'noerror)
+	(require 'password nil 'noerror))) ; Part of contrib.
+
+  ;; auth-source is relatively new.
+  (if (featurep 'xemacs)
+      (load "auth-source" 'noerror)
+    (require 'auth-source nil 'noerror))
 
   ;; Load the appropriate timer package.
   (if (featurep 'xemacs)
       (require 'timer-funcs)
     (require 'timer))
 
-  (autoload 'tramp-tramp-file-p "tramp")
-  (autoload 'tramp-file-name-handler "tramp")
-  (autoload 'tramp-handle-file-remote-p "tramp")
+  ;; We check whether `start-file-process' is bound.
+  (unless (fboundp 'start-file-process)
 
-  ;; tramp-util offers integration into other (X)Emacs packages like
-  ;; compile.el, gud.el etc.  Not necessary in Emacs 23.
-  (eval-after-load "tramp"
-    ;; We check whether `start-file-process' is an alias.
-    '(when (or (not (fboundp 'start-file-process))
-	       (symbolp (symbol-function 'start-file-process)))
-       (require 'tramp-util)
-       (add-hook 'tramp-unload-hook
-		 '(lambda ()
-		    (when (featurep 'tramp-util)
-		      (unload-feature 'tramp-util 'force))))))
-
-  ;; Make sure that we get integration with the VC package.  When it
-  ;; is loaded, we need to pull in the integration module.  Not
-  ;; necessary in Emacs 23.
-  (eval-after-load "vc"
+    ;; tramp-util offers integration into other (X)Emacs packages like
+    ;; compile.el, gud.el etc.  Not necessary in Emacs 23.
     (eval-after-load "tramp"
-      ;; We check whether `start-file-process' is an alias.
-      '(when (or (not (fboundp 'start-file-process))
-		 (symbolp (symbol-function 'start-file-process)))
-	 (require 'tramp-vc)
-	 (add-hook 'tramp-unload-hook
-		   '(lambda ()
-		      (when (featurep 'tramp-vc)
-			(unload-feature 'tramp-vc 'force)))))))
+      '(require 'tramp-util))
+
+    ;; Make sure that we get integration with the VC package.  When it
+    ;; is loaded, we need to pull in the integration module.  Not
+    ;; necessary in Emacs 23.
+    (eval-after-load "vc"
+      (eval-after-load "tramp"
+	'(require 'tramp-vc))))
 
   ;; Avoid byte-compiler warnings if the byte-compiler supports this.
   ;; Currently, XEmacs supports this.
@@ -86,24 +88,31 @@
   ;; `directory-sep-char' is an obsolete variable in Emacs.  But it is
   ;; used in XEmacs, so we set it here and there.  The following is
   ;; needed to pacify Emacs byte-compiler.
-  (unless (boundp 'byte-compile-not-obsolete-var)
-    (defvar byte-compile-not-obsolete-var nil))
-  (setq byte-compile-not-obsolete-var 'directory-sep-char)
-  (if (boundp 'byte-compile-not-obsolete-vars) ; Emacs 23.2
-      (setq byte-compile-not-obsolete-vars '(directory-sep-char)))
+  ;; Note that it was removed altogether in Emacs 24.1.
+  (when (boundp 'directory-sep-char)
+    (defvar byte-compile-not-obsolete-var nil)
+    (setq byte-compile-not-obsolete-var 'directory-sep-char)
+    ;; Emacs 23.2.
+    (defvar byte-compile-not-obsolete-vars nil)
+    (setq byte-compile-not-obsolete-vars '(directory-sep-char)))
 
-  ;; `with-temp-message' does not exists in XEmacs.
-  (condition-case nil
-      (with-temp-message (current-message) nil)
-    (error (defmacro with-temp-message (message &rest body) `(progn ,@body))))
+  ;; `remote-file-name-inhibit-cache' has been introduced with Emacs 24.1.
+  ;; Besides `t', `nil', and integer, we use also timestamps (as
+  ;; returned by `current-time') internally.
+  (defvar remote-file-name-inhibit-cache nil)
+
+  ;; For not existing functions, or functions with a changed argument
+  ;; list, there are compiler warnings.  We want to avoid them in
+  ;; cases we know what we do.
+  (defmacro tramp-compat-funcall (function &rest arguments)
+    (if (featurep 'xemacs)
+	`(funcall (symbol-function ,function) ,@arguments)
+      `(when (or (subrp ,function) (functionp ,function))
+	 (with-no-warnings (funcall ,function ,@arguments)))))
 
   ;; `set-buffer-multibyte' comes from Emacs Leim.
   (unless (fboundp 'set-buffer-multibyte)
     (defalias 'set-buffer-multibyte 'ignore))
-
-  ;; `font-lock-add-keywords' does not exist in XEmacs.
-  (unless (fboundp 'font-lock-add-keywords)
-    (defalias 'font-lock-add-keywords 'ignore))
 
   ;; The following functions cannot be aliases of the corresponding
   ;; `tramp-handle-*' functions, because this would bypass the locking
@@ -120,7 +129,7 @@
 	  (tramp-file-name-handler
 	   'file-remote-p file identification connected)))))
 
-  ;; `process-file' exists since Emacs 22.
+  ;; `process-file' does not exist in XEmacs.
   (unless (fboundp 'process-file)
     (defalias 'process-file
       (lambda (program &optional infile buffer display &rest args)
@@ -155,9 +164,8 @@
   ;; just hope that this doesn't break anything else.
   ;; It is not needed anymore since GNU Emacs 23.2.
   (unless (or (featurep 'xemacs)
-	      ;; `featurep' has only one argument in GNU Emacs 21.
-	      (ignore-errors
-		(funcall 'featurep 'files 'remote-wildcards)))
+	      ;; `featurep' has only one argument in XEmacs.
+	      (funcall 'featurep 'files 'remote-wildcards))
     (defadvice file-expand-wildcards
       (around tramp-advice-file-expand-wildcards activate)
       (let ((name (ad-get-arg 0)))
@@ -166,7 +174,8 @@
 	(if (and
 	     (tramp-tramp-file-p name)
 	     (not (string-match
-		   "[[*?]" (tramp-handle-file-remote-p name 'localname))))
+		   "[[*?]" (tramp-compat-funcall
+			    'file-remote-p name 'localname))))
 	    (setq ad-return-value (list name))
 	  ;; Otherwise, just run the original function.
 	  ad-do-it)))
@@ -177,24 +186,18 @@
 	'file-expand-wildcards 'around 'tramp-advice-file-expand-wildcards)
        (ad-activate 'file-expand-wildcards)))))
 
-(defsubst tramp-compat-line-beginning-position ()
-  "Return point at beginning of line (compat function).
-Calls `line-beginning-position' or `point-at-bol' if defined, else
-own implementation."
-  (cond
-   ((fboundp 'line-beginning-position)
-    (funcall (symbol-function 'line-beginning-position)))
-   ((fboundp 'point-at-bol) (funcall (symbol-function 'point-at-bol)))
-   (t (save-excursion (beginning-of-line) (point)))))
+;; `with-temp-message' does not exists in XEmacs.
+(if (fboundp 'with-temp-message)
+    (defalias 'tramp-compat-with-temp-message 'with-temp-message)
+  (defmacro tramp-compat-with-temp-message (message &rest body)
+    "Display MESSAGE temporarily if non-nil while BODY is evaluated."
+    `(progn ,@body)))
 
-(defsubst tramp-compat-line-end-position ()
-  "Return point at end of line (compat function).
-Calls `line-end-position' or `point-at-eol' if defined, else
-own implementation."
-  (cond
-   ((fboundp 'line-end-position) (funcall (symbol-function 'line-end-position)))
-   ((fboundp 'point-at-eol) 	 (funcall (symbol-function 'point-at-eol)))
-   (t (save-excursion (end-of-line) (point)))))
+;; `font-lock-add-keywords' does not exist in XEmacs.
+(defun tramp-compat-font-lock-add-keywords (mode keywords &optional how)
+  "Add highlighting KEYWORDS for MODE."
+  (ignore-errors
+    (tramp-compat-funcall 'font-lock-add-keywords mode keywords how)))
 
 (defsubst tramp-compat-temporary-file-directory ()
   "Return name of directory for temporary files (compat function).
@@ -202,7 +205,7 @@ For Emacs, this is the variable `temporary-file-directory', for XEmacs
 this is the function `temp-directory'."
   (cond
    ((boundp 'temporary-file-directory) (symbol-value 'temporary-file-directory))
-   ((fboundp 'temp-directory) (funcall (symbol-function 'temp-directory)))
+   ((fboundp 'temp-directory) (tramp-compat-funcall 'temp-directory))
    ((let ((d (getenv "TEMP"))) (and d (file-directory-p d)))
     (file-name-as-directory (getenv "TEMP")))
    ((let ((d (getenv "TMP"))) (and d (file-directory-p d)))
@@ -214,10 +217,9 @@ this is the function `temp-directory'."
 		       "`temp-directory' is defined -- using /tmp."))
       (file-name-as-directory "/tmp"))))
 
-;; `make-temp-file' exists in Emacs only.  The third parameter SUFFIX
-;; has been introduced with Emacs 22.  We try it, if it fails, we fall
-;; back to `make-temp-name', creating the temporary file immediately
-;; in order to avoid a security hole.
+;; `make-temp-file' exists in Emacs only.  On XEmacs, we use our own
+;; implementation with `make-temp-name', creating the temporary file
+;; immediately in order to avoid a security hole.
 (defsubst tramp-compat-make-temp-file (filename &optional dir-flag)
   "Create a temporary file (compat function).
 Add the extension of FILENAME, if existing."
@@ -229,8 +231,7 @@ Add the extension of FILENAME, if existing."
 	 result)
     (condition-case nil
 	(setq result
-	      (funcall
-	       (symbol-function 'make-temp-file) prefix dir-flag extension))
+	      (tramp-compat-funcall 'make-temp-file prefix dir-flag extension))
       (error
        ;; We use our own implementation, taken from files.el.
        (while
@@ -239,14 +240,7 @@ Add the extension of FILENAME, if existing."
 		 (setq result (concat (make-temp-name prefix) extension))
 		 (if dir-flag
 		     (make-directory result)
-		   (write-region
-		    "" nil result nil 'silent nil
-		    ;; 7th parameter is MUSTBENEW in Emacs, and
-		    ;; CODING-SYSTEM in XEmacs.  It is not a security
-		    ;; hole in XEmacs if we cannot use this parameter,
-		    ;; because XEmacs uses a user-specific
-		    ;; subdirectory with 0700 permissions.
-		    (when (not (featurep 'xemacs)) 'excl)))
+		   (write-region "" nil result nil 'silent))
 		 nil)
 	     (file-already-exists t))
 	 ;; The file was somehow created by someone else between
@@ -254,16 +248,33 @@ Add the extension of FILENAME, if existing."
 	 nil)))
     result))
 
-;; `most-positive-fixnum' arrived in Emacs 22.  Before, and in XEmacs,
-;; it is a fixed value.
+;; `most-positive-fixnum' does not exist in XEmacs.
 (defsubst tramp-compat-most-positive-fixnum ()
   "Return largest positive integer value (compat function)."
   (cond
    ((boundp 'most-positive-fixnum) (symbol-value 'most-positive-fixnum))
-   ;; Default value in XEmacs and Emacs 21.
+   ;; Default value in XEmacs.
    (t 134217727)))
 
-;; ID-FORMAT exists since Emacs 22.
+(defun tramp-compat-decimal-to-octal (i)
+  "Return a string consisting of the octal digits of I.
+Not actually used.  Use `(format \"%o\" i)' instead?"
+  (cond ((< i 0) (error "Cannot convert negative number to octal"))
+        ((not (integerp i)) (error "Cannot convert non-integer to octal"))
+        ((zerop i) "0")
+        (t (concat (tramp-compat-decimal-to-octal (/ i 8))
+                   (number-to-string (% i 8))))))
+
+;; Kudos to Gerd Moellmann for this suggestion.
+(defun tramp-compat-octal-to-decimal (ostr)
+  "Given a string of octal digits, return a decimal number."
+  (let ((x (or ostr "")))
+    ;; `save-match' is in `tramp-mode-string-to-int' which calls this.
+    (unless (string-match "\\`[0-7]*\\'" x)
+      (error "Non-octal junk in string `%s'" x))
+    (string-to-number ostr 8)))
+
+;; ID-FORMAT does not exists in XEmacs.
 (defun tramp-compat-file-attributes (filename &optional id-format)
   "Like `file-attributes' for Tramp files (compat function)."
   (cond
@@ -272,19 +283,27 @@ Add the extension of FILENAME, if existing."
    ((tramp-tramp-file-p filename)
     (tramp-file-name-handler 'file-attributes filename id-format))
    (t (condition-case nil
-	  (funcall (symbol-function 'file-attributes) filename id-format)
-	(error (file-attributes filename))))))
+	  (tramp-compat-funcall 'file-attributes filename id-format)
+	(wrong-number-of-arguments (file-attributes filename))))))
 
 ;; PRESERVE-UID-GID has been introduced with Emacs 23.  It does not
 ;; hurt to ignore it for other (X)Emacs versions.
+;; PRESERVE-SELINUX-CONTEXT has been introduced with Emacs 24.
 (defun tramp-compat-copy-file
-  (filename newname &optional ok-if-already-exists keep-date preserve-uid-gid)
+  (filename newname &optional ok-if-already-exists keep-date
+	    preserve-uid-gid preserve-selinux-context)
   "Like `copy-file' for Tramp files (compat function)."
-  (if preserve-uid-gid
-      (funcall
-       (symbol-function 'copy-file)
-       filename newname ok-if-already-exists keep-date preserve-uid-gid)
-    (copy-file filename newname ok-if-already-exists keep-date)))
+  (cond
+   (preserve-selinux-context
+    (tramp-compat-funcall
+     'copy-file filename newname ok-if-already-exists keep-date
+     preserve-uid-gid preserve-selinux-context))
+   (preserve-uid-gid
+    (tramp-compat-funcall
+     'copy-file filename newname ok-if-already-exists keep-date
+     preserve-uid-gid))
+   (t
+    (copy-file filename newname ok-if-already-exists keep-date))))
 
 ;; `copy-directory' is a new function in Emacs 23.2.  Implementation
 ;; is taken from there.
@@ -292,11 +311,10 @@ Add the extension of FILENAME, if existing."
   (directory newname &optional keep-time parents)
   "Make a copy of DIRECTORY (compat function)."
   (if (fboundp 'copy-directory)
-      (funcall
-       (symbol-function 'copy-directory) directory newname keep-time parents)
+      (tramp-compat-funcall 'copy-directory directory newname keep-time parents)
 
-    ;; If default-directory is a remote directory, make sure we find
-    ;; its copy-directory handler.
+    ;; If `default-directory' is a remote directory, make sure we find
+    ;; its `copy-directory' handler.
     (let ((handler (or (find-file-name-handler directory 'copy-directory)
 		       (find-file-name-handler newname 'copy-directory))))
       (if handler
@@ -328,36 +346,45 @@ Add the extension of FILENAME, if existing."
 	(if keep-time
 	    (set-file-times newname (nth 5 (file-attributes directory))))))))
 
-;; `copy-tree' is a built-in function in XEmacs.  In Emacs 21, it is
-;; an autoloaded function in cl-extra.el.  Since Emacs 22, it is part
-;; of subr.el.  There are problems when autoloading, therefore we test
-;; for `subrp' and `symbol-file'.  Implementation is taken from Emacs 23.
-(defun tramp-compat-copy-tree (tree)
-  "Make a copy of TREE (compat function)."
-  (if (or (subrp 'copy-tree) (symbol-file 'copy-tree))
-      (funcall (symbol-function 'copy-tree) tree)
-    (let (result)
-      (while (consp tree)
-	(let ((newcar (car tree)))
-	  (if (consp (car tree))
-	      (setq newcar (tramp-compat-copy-tree (car tree))))
-	  (push newcar result))
-	(setq tree (cdr tree)))
-      (nconc (nreverse result) tree))))
+;; TRASH has been introduced with Emacs 24.1.
+(defun tramp-compat-delete-file (filename &optional trash)
+  "Like `delete-file' for Tramp files (compat function)."
+  (condition-case nil
+      (tramp-compat-funcall 'delete-file filename trash)
+    ;; This Emacs version does not support the TRASH flag.
+    (wrong-number-of-arguments
+     (let ((delete-by-moving-to-trash
+	    (and (boundp 'delete-by-moving-to-trash)
+		 (symbol-value 'delete-by-moving-to-trash)
+		 trash)))
+       (delete-file filename)))))
 
 ;; RECURSIVE has been introduced with Emacs 23.2.
 (defun tramp-compat-delete-directory (directory &optional recursive)
   "Like `delete-directory' for Tramp files (compat function)."
-  (if recursive
-      (funcall (symbol-function 'delete-directory) directory recursive)
-    (delete-directory directory)))
+  (if (null recursive)
+      (delete-directory directory)
+    (condition-case nil
+	(tramp-compat-funcall 'delete-directory directory recursive)
+      ;; This Emacs version does not support the RECURSIVE flag.  We
+      ;; use the implementation from Emacs 23.2.
+      (wrong-number-of-arguments
+       (setq directory (directory-file-name (expand-file-name directory)))
+       (if (not (file-symlink-p directory))
+	   (mapc (lambda (file)
+		   (if (eq t (car (file-attributes file)))
+		       (tramp-compat-delete-directory file recursive)
+		     (delete-file file)))
+		 (directory-files
+		  directory 'full "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*")))
+       (delete-directory directory)))))
 
-;; `number-sequence' has been introduced in Emacs 22.  Implementation
-;; is taken from Emacs 23.
+;; `number-sequence' does not exist in XEmacs.  Implementation is
+;; taken from Emacs 23.
 (defun tramp-compat-number-sequence (from &optional to inc)
   "Return a sequence of numbers from FROM to TO as a list (compat function)."
   (if (or (subrp 'number-sequence) (symbol-file 'number-sequence))
-      (funcall (symbol-function 'number-sequence) from to inc)
+      (tramp-compat-funcall 'number-sequence from to inc)
     (if (or (not to) (= from to))
 	(list from)
       (or inc (setq inc 1))
@@ -381,21 +408,33 @@ This is, the first, empty, element is omitted.  In XEmacs, the first
 element is not omitted."
   (delete "" (split-string string pattern)))
 
+(defun tramp-compat-call-process
+  (program &optional infile destination display &rest args)
+  "Calls `call-process' on the local host.
+This is needed because for some Emacs flavors Tramp has
+defadviced `call-process' to behave like `process-file'.  The
+Lisp error raised when PROGRAM is nil is trapped also, returning 1."
+  (let ((default-directory
+	  (if (file-remote-p default-directory)
+	      (tramp-compat-temporary-file-directory)
+	    default-directory)))
+    (if (executable-find program)
+	(apply 'call-process program infile destination display args)
+      1)))
+
 (defun tramp-compat-process-running-p (process-name)
   "Returns `t' if system process PROCESS-NAME is running for `user-login-name'."
   (when (stringp process-name)
     (cond
      ;; GNU Emacs 22 on w32.
      ((fboundp 'w32-window-exists-p)
-      (funcall (symbol-function 'w32-window-exists-p)
-	       process-name process-name))
+      (tramp-compat-funcall 'w32-window-exists-p process-name process-name))
 
      ;; GNU Emacs 23.
      ((and (fboundp 'list-system-processes) (fboundp 'process-attributes))
       (let (result)
-	(dolist (pid (funcall (symbol-function 'list-system-processes)) result)
-	  (let ((attributes
-		 (funcall (symbol-function 'process-attributes) pid)))
+	(dolist (pid (tramp-compat-funcall 'list-system-processes) result)
+	  (let ((attributes (tramp-compat-funcall 'process-attributes pid)))
 	    (when (and (string-equal
                         (cdr (assoc 'user attributes)) (user-login-name))
                        (let ((comm (cdr (assoc 'comm attributes))))
@@ -425,9 +464,50 @@ element is not omitted."
 	  (setenv "UNIX95" unix95)
 	  result)))))
 
+;; The following functions do not exist in XEmacs.  We ignore this;
+;; they are used for checking a remote tty.
+(defun tramp-compat-process-get (process propname)
+  "Return the value of PROCESS' PROPNAME property.
+This is the last value stored with `(process-put PROCESS PROPNAME VALUE)'."
+  (ignore-errors (tramp-compat-funcall 'process-get process propname)))
+
+(defun tramp-compat-process-put (process propname value)
+  "Change PROCESS' PROPNAME property to VALUE.
+It can be retrieved with `(process-get PROCESS PROPNAME)'."
+  (ignore-errors (tramp-compat-funcall 'process-put process propname value)))
+
+(defun tramp-compat-set-process-query-on-exit-flag (process flag)
+  "Specify if query is needed for process when Emacs is exited.
+If the second argument flag is non-nil, Emacs will query the user before
+exiting if process is running."
+  (if (fboundp 'set-process-query-on-exit-flag)
+      (tramp-compat-funcall 'set-process-query-on-exit-flag process flag)
+    (tramp-compat-funcall 'process-kill-without-query process flag)))
+
+(add-hook 'tramp-unload-hook
+	  (lambda ()
+	    (unload-feature 'tramp-compat 'force)))
+
+(defun tramp-compat-coding-system-change-eol-conversion (coding-system eol-type)
+  "Return a coding system like CODING-SYSTEM but with given EOL-TYPE.
+EOL-TYPE can be one of `dos', `unix', or `mac'."
+  (cond ((fboundp 'coding-system-change-eol-conversion)
+         (tramp-compat-funcall
+	  'coding-system-change-eol-conversion coding-system eol-type))
+        ((fboundp 'subsidiary-coding-system)
+         (tramp-compat-funcall
+	  'subsidiary-coding-system coding-system
+	  (cond ((eq eol-type 'dos) 'crlf)
+		((eq eol-type 'unix) 'lf)
+		((eq eol-type 'mac) 'cr)
+		(t
+		 (error "Unknown EOL-TYPE `%s', must be %s"
+			eol-type
+			"`dos', `unix', or `mac'")))))
+        (t (error "Can't change EOL conversion -- is MULE missing?"))))
+
 (provide 'tramp-compat)
 
 ;;; TODO:
 
-;; arch-tag: 0e724b18-6699-4f87-ad96-640b272e5c85
 ;;; tramp-compat.el ends here

@@ -4,6 +4,7 @@
 
 ;; Author: Teodor Zlatanov <tzz@lifelogs.com>
 ;; Keywords: mail, comm
+;; Package: tramp
 
 ;; This file is part of GNU Emacs.
 
@@ -54,7 +55,6 @@
 
 (require 'assoc)
 (require 'tramp)
-(require 'tramp-compat)
 
 (autoload 'auth-source-user-or-password "auth-source")
 (autoload 'epg-context-operation "epg")
@@ -63,6 +63,7 @@
 (autoload 'epg-context-set-progress-callback "epg")
 (autoload 'epg-decrypt-string "epg")
 (autoload 'epg-encrypt-string "epg")
+(autoload 'epg-make-context "epg")
 (autoload 'imap-hash-get "imap-hash")
 (autoload 'imap-hash-make "imap-hash")
 (autoload 'imap-hash-map "imap-hash")
@@ -74,21 +75,29 @@
   '(add-to-list 'imap-hash-headers 'X-Size 'append))
 
 ;; Define Tramp IMAP method ...
+;;;###tramp-autoload
 (defconst tramp-imap-method "imap"
   "*Method to connect via IMAP protocol.")
 
-(add-to-list 'tramp-methods (list tramp-imap-method '(tramp-default-port 143)))
+;;;###tramp-autoload
+(when (and (locate-library "epa") (locate-library "imap-hash"))
+  (add-to-list 'tramp-methods
+	       (list tramp-imap-method '(tramp-default-port 143))))
 
 ;; Add a default for `tramp-default-user-alist'.  Default is the local user.
 (add-to-list 'tramp-default-user-alist
 	     `(,tramp-imap-method nil ,(user-login-name)))
 
 ;; Define Tramp IMAPS method ...
+;;;###tramp-autoload
 (defconst tramp-imaps-method "imaps"
   "*Method to connect via secure IMAP protocol.")
 
 ;; ... and add it to the method list.
-(add-to-list 'tramp-methods (list tramp-imaps-method '(tramp-default-port 993)))
+;;;###tramp-autoload
+(when (and (locate-library "epa") (locate-library "imap-hash"))
+  (add-to-list 'tramp-methods
+	       (list tramp-imaps-method '(tramp-default-port 993))))
 
 ;; Add a default for `tramp-default-user-alist'.  Default is the local user.
 (add-to-list 'tramp-default-user-alist
@@ -113,7 +122,7 @@
     (directory-file-name . tramp-handle-directory-file-name)
     (directory-files . tramp-handle-directory-files)
     (directory-files-and-attributes
-     . tramp-imap-handle-directory-files-and-attributes)
+     . tramp-handle-directory-files-and-attributes)
     (dired-call-process . ignore)
     ;; `dired-compress-file' performed by default handler
     ;; `dired-uncache' performed by default handler
@@ -121,10 +130,9 @@
     ;; `file-accessible-directory-p' performed by default handler
     (file-attributes . tramp-imap-handle-file-attributes)
     (file-directory-p .  tramp-imap-handle-file-directory-p)
-    (file-executable-p . tramp-imap-handle-file-executable-p)
-    (file-exists-p . tramp-imap-handle-file-exists-p)
+    (file-executable-p . ignore)
+    (file-exists-p . tramp-handle-file-exists-p)
     (file-local-copy . tramp-imap-handle-file-local-copy)
-    (file-remote-p . tramp-handle-file-remote-p)
     (file-modes . tramp-handle-file-modes)
     (file-name-all-completions . tramp-imap-handle-file-name-all-completions)
     (file-name-as-directory . tramp-handle-file-name-as-directory)
@@ -132,10 +140,12 @@
     (file-name-directory . tramp-handle-file-name-directory)
     (file-name-nondirectory . tramp-handle-file-name-nondirectory)
     ;; `file-name-sans-versions' performed by default handler
-    (file-newer-than-file-p . tramp-imap-handle-file-newer-than-file-p)
+    (file-newer-than-file-p . tramp-handle-file-newer-than-file-p)
     (file-ownership-preserved-p . ignore)
-    (file-readable-p . tramp-imap-handle-file-readable-p)
+    (file-readable-p . tramp-handle-file-exists-p)
     (file-regular-p . tramp-handle-file-regular-p)
+    (file-remote-p . tramp-handle-file-remote-p)
+    ;; `file-selinux-context' performed by default handler.
     (file-symlink-p . tramp-handle-file-symlink-p)
     ;; `file-truename' performed by default handler
     (file-writable-p . tramp-imap-handle-file-writable-p)
@@ -150,6 +160,7 @@
     (make-symbolic-link . ignore)
     (rename-file . tramp-imap-handle-rename-file)
     (set-file-modes . ignore)
+    ;; `set-file-selinux-context' performed by default handler.
     (set-file-times . ignore) ;; tramp-imap-handle-set-file-times)
     (set-visited-file-modtime . ignore)
     (shell-command . ignore)
@@ -168,7 +179,7 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 (defgroup tramp-imap nil
   "Tramp over IMAP configuration."
   :version "23.2"
-  :group 'applications)
+  :group 'tramp)
 
 (defcustom tramp-imap-subject-marker "tramp-imap-subject-marker"
   "The subject marker that Tramp-IMAP will use."
@@ -180,13 +191,15 @@ Operations not mentioned here will be handled by the default Emacs primitives.")
 (defvar tramp-imap-passphrase-cache nil) ;; can be t or 'never
 (defvar tramp-imap-passphrase nil)
 
-(defun tramp-imap-file-name-p (filename)
+;;;###tramp-autoload
+(defsubst tramp-imap-file-name-p (filename)
   "Check if it's a filename for IMAP protocol."
   (let ((v (tramp-dissect-file-name filename)))
     (or
      (string= (tramp-file-name-method v) tramp-imap-method)
      (string= (tramp-file-name-method v) tramp-imaps-method))))
 
+;;;###tramp-autoload
 (defun tramp-imap-file-name-handler (operation &rest args)
   "Invoke the IMAP related OPERATION.
 First arg specifies the OPERATION, second arg is a list of arguments to
@@ -196,11 +209,14 @@ pass to the OPERATION."
 	(save-match-data (apply (cdr fn) args))
       (tramp-run-real-handler operation args))))
 
-(add-to-list 'tramp-foreign-file-name-handler-alist
-	     (cons 'tramp-imap-file-name-p 'tramp-imap-file-name-handler))
+;;;###tramp-autoload
+(when (and (locate-library "epa") (locate-library "imap-hash"))
+  (add-to-list 'tramp-foreign-file-name-handler-alist
+	       (cons 'tramp-imap-file-name-p 'tramp-imap-file-name-handler)))
 
 (defun tramp-imap-handle-copy-file
-  (filename newname &optional ok-if-already-exists keep-date preserve-uid-gid)
+  (filename newname &optional ok-if-already-exists keep-date
+	    preserve-uid-gid preserve-selinux-context)
   "Like `copy-file' for Tramp files."
   (tramp-imap-do-copy-or-rename-file
    'copy filename newname ok-if-already-exists keep-date preserve-uid-gid))
@@ -237,35 +253,33 @@ of `copy' and `rename'."
 	(t2 (and (tramp-tramp-file-p newname)
 		 (tramp-imap-file-name-p newname))))
 
-    (when (and (not ok-if-already-exists) (file-exists-p newname))
-      (with-parsed-tramp-file-name (if t1 filename newname) nil
+    (with-parsed-tramp-file-name (if t1 filename newname) nil
+      (when (and (not ok-if-already-exists) (file-exists-p newname))
 	(tramp-error
-	 v 'file-already-exists "File %s already exists" newname)))
+	 v 'file-already-exists "File %s already exists" newname))
 
-    (with-parsed-tramp-file-name (if t1 filename newname) nil
-      (tramp-message v 0 "Transferring %s to %s..." filename newname))
+      (with-progress-reporter
+	  v 0 (format "%s %s to %s"
+		      (if (eq op 'copy) "Copying" "Renaming")
+		      filename newname)
 
-    ;; We just make a local copy of FILENAME, and write it then to
-    ;; NEWNAME.  This must be optimized, when both files are located
-    ;; on the same IMAP server.
-    (with-temp-buffer
-      (if (and t1 t2)
-	  ;; We don't encrypt.
-	  (with-parsed-tramp-file-name newname nil
-	    (insert (tramp-imap-get-file filename nil))
-	    (tramp-imap-put-file
-	     v (current-buffer)
-	     (tramp-imap-file-name-name v)
-	     nil nil (nth 7 (file-attributes filename))))
-	;; One of them is not located on a IMAP mailbox.
-	(insert-file-contents filename)
-	(write-region (point-min) (point-max) newname)))
+	;; We just make a local copy of FILENAME, and write it then to
+	;; NEWNAME.  This must be optimized, when both files are
+	;; located on the same IMAP server.
+	(with-temp-buffer
+	  (if (and t1 t2)
+	      ;; We don't encrypt.
+	      (with-parsed-tramp-file-name newname v1
+		(insert (tramp-imap-get-file filename nil))
+		(tramp-imap-put-file
+		 v1 (current-buffer)
+		 (tramp-imap-file-name-name v1)
+		 nil nil (nth 7 (file-attributes filename))))
+	    ;; One of them is not located on a IMAP mailbox.
+	    (insert-file-contents filename)
+	    (write-region (point-min) (point-max) newname)))))
 
-    (with-parsed-tramp-file-name (if t1 filename newname) nil
-      (tramp-message v 0 "Transferring %s to %s...done" filename newname))
-
-    (when (eq op 'rename)
-      (delete-file filename))))
+    (when (eq op 'rename) (delete-file filename))))
 
 ;; TODO: revise this much
 (defun tramp-imap-handle-expand-file-name (name &optional dir)
@@ -501,21 +515,16 @@ SIZE MODE WEIRD INODE DEVICE)."
 	 v 'file-error "File `%s' not found on remote host" filename)
       (let ((point (point))
 	    size data)
-	(tramp-message v 4 "Fetching file %s..." filename)
-	(insert (tramp-imap-get-file filename t))
-	(setq size (- (point) point))
+	(with-progress-reporter v 3 (format "Fetching file %s" filename)
+	  (insert (tramp-imap-get-file filename t))
+	  (setq size (- (point) point))
 ;;; TODO: handle ranges.
 ;;; 	       (let ((beg (or beg (point-min)))
 ;;; 		   (end (min (or end (point-max)) (point-max))))
 ;;; 		 (setq size (- end beg))
 ;;; 	       (buffer-substring beg end))
-	(goto-char point)
-	(tramp-message v 4 "Fetching file %s...done" filename)
-	(list (expand-file-name filename) size)))))
-
-(defun tramp-imap-handle-file-exists-p (filename)
-  "Like `file-exists-p' for Tramp files."
-  (and (file-attributes filename) t))
+	  (goto-char point)
+	  (list (expand-file-name filename) size))))))
 
 (defun tramp-imap-handle-file-directory-p (filename)
   "Like `file-directory-p' for Tramp-IMAP files."
@@ -536,45 +545,19 @@ SIZE MODE WEIRD INODE DEVICE)."
   "Get inode equivalent \(actually the UID) for Tramp-IMAP FILENAME."
   (nth 10 (tramp-compat-file-attributes filename id-format)))
 
-(defun tramp-imap-handle-file-executable-p (filename)
-  "Like `file-executable-p' for Tramp files.  False for IMAP."
-  nil)
-
-(defun tramp-imap-handle-file-readable-p (filename)
-  "Like `file-readable-p' for Tramp files.  True for IMAP."
-  (file-exists-p filename))
-
 (defun tramp-imap-handle-file-writable-p (filename)
   "Like `file-writable-p' for Tramp files.  True for IMAP."
   ;; `file-exists-p' does not work yet for directories.
   ;; (file-exists-p (file-name-directory filename)))
   (file-directory-p (file-name-directory filename)))
 
-(defun tramp-imap-handle-delete-file (filename)
+(defun tramp-imap-handle-delete-file (filename &optional trash)
   "Like `delete-file' for Tramp files."
   (cond
    ((not (file-exists-p filename)) nil)
    (t (with-parsed-tramp-file-name (expand-file-name filename) nil
 	(let ((iht (tramp-imap-make-iht v)))
 	  (imap-hash-rem (tramp-imap-get-file-inode filename) iht))))))
-
-(defun tramp-imap-handle-directory-files-and-attributes
-  (directory &optional full match nosort id-format)
-  "Like `directory-files-and-attributes' for Tramp files."
-  (mapcar
-   (lambda (x)
-     (cons x (tramp-compat-file-attributes
-	      (if full x (expand-file-name x directory)) id-format)))
-   (directory-files directory full match nosort)))
-
-;; TODO: fix this in tramp-imap-get-file-entries.
-(defun tramp-imap-handle-file-newer-than-file-p (file1 file2)
-  "Like `file-newer-than-file-p' for Tramp files."
-  (cond
-   ((not (file-exists-p file1)) nil)
-   ((not (file-exists-p file2)) t)
-   (t (tramp-time-less-p (nth 5 (file-attributes file2))
-			 (nth 5 (file-attributes file1))))))
 
 (defun tramp-imap-handle-file-local-copy (filename)
   "Like `file-local-copy' for Tramp files."
@@ -584,12 +567,12 @@ SIZE MODE WEIRD INODE DEVICE)."
        v 'file-error
        "Cannot make local copy of non-existing file `%s'" filename))
     (let ((tmpfile (tramp-compat-make-temp-file filename)))
-      (tramp-message v 4 "Fetching %s to tmp file %s..." filename tmpfile)
-      (with-temp-buffer
-	(insert-file-contents filename)
- 	(write-region (point-min) (point-max) tmpfile)
- 	(tramp-message v 4 "Fetching %s to tmp file %s...done" filename tmpfile)
- 	tmpfile))))
+      (with-progress-reporter
+	  v 3 (format "Fetching %s to tmp file %s" filename tmpfile)
+	(with-temp-buffer
+	  (insert-file-contents filename)
+	  (write-region (point-min) (point-max) tmpfile)
+	  tmpfile)))))
 
 (defun tramp-imap-put-file
   (vec filename-or-buffer &optional subject inode encode size)
@@ -774,6 +757,10 @@ With NEEDED-SUBJECT, alters the imap-hash test accordingly."
 		   tramp-imap-subject-marker
 		   (if needed-subject needed-subject "")))))
 
+(add-hook 'tramp-unload-hook
+	  (lambda ()
+	      (unload-feature 'tramp-imap 'force)))
+
 ;;; TODO:
 
 ;; * Implement `tramp-imap-handle-delete-directory',
@@ -855,5 +842,3 @@ With NEEDED-SUBJECT, alters the imap-hash test accordingly."
 ;;; (tramp-imap-make-iht (tramp-dissect-file-name "/imap:yourhosthere.com:/test/welcommen"))
 ;;; (tramp-imap-make-iht (tramp-dissect-file-name "/imap:yourhosthere.com:/INBOX.test/4"))
 ;;; (tramp-imap-make-iht (tramp-dissect-file-name "/imap:yourhosthere.com:/INBOX.test/4") "extra")
-
-;; arch-tag: f2723749-58fb-4f29-894e-39708096e850
