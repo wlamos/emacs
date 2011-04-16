@@ -230,6 +230,7 @@
 	   "W-e" `(jump-or-exec "Emacs@" "emacs")
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
+	   "W-i" `(jump-or-exec "Twitter@Emacs" "emacs")
 	   "W-F9" 'run-shell-command
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
 	   "W-F11" `(jump-or-exec "shell@power102" '(wl-exec-with-name "gnome-terminal" "shell@power102" "Work"))
