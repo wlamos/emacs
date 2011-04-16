@@ -905,6 +905,15 @@ returned."
       (insert ";; This buffer is for interacting with the sawfish window manager.\n\n")))
   (sawfish-interaction-mode))
 
+(defun sawfish-indent-or-complete-symbol ()
+  ""
+  (interactive)
+  (if (or (bolp)
+	  (= (char-before) ?\t)
+	  (= (char-before) ?\ ))
+      (indent-for-tab-command)
+    (sawfish-complete-symbol)))
+
 ;; Define the sawfish-mode keymap.
 (define-key sawfish-mode-map [(control x) (control e)]             #'sawfish-eval-last-sexp)
 (define-key sawfish-mode-map [(meta control x)]                    #'sawfish-eval-defun)
@@ -915,7 +924,7 @@ returned."
 (define-key sawfish-mode-map [(control c) (control h) ?v]          #'sawfish-describe-variable)
 (define-key sawfish-mode-map [(control c) (control h) (control v)] #'sawfish-info-variable)
 (define-key sawfish-mode-map [(meta tab)]                          #'sawfish-complete-symbol)
-(define-key sawfish-mode-map [(tab)]                          #'sawfish-complete-symbol)
+(define-key sawfish-mode-map [(tab)]                               #'sawfish-indent-or-complete-symbol)
 (define-key sawfish-mode-map [(control c) (control h) ?i]          #'sawfish-info)
 (define-key sawfish-mode-map [(control meta :)]                    #'eval-expression)
 
