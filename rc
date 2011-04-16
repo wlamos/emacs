@@ -174,6 +174,7 @@
 	   "W-e" `(jump-or-exec "^Emacs" "emacs")
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
+	   "W-F9" 'run-shell-command
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
 	   "W-F11" `(jump-or-exec "shell@power102" '(wl-exec-with-name "gnome-terminal" "shell@power102"))
 	   "W-F12" `(jump-or-exec "emacs@power102" '(wl-exec-with-name "gnome-terminal" "emacs@power102"))
@@ -202,19 +203,9 @@
 	   "a" `(jump-or-exec "Adobe Reader$" "acroread")
 	   )
 
-;; Workspace Keymacros
-(define ws-keymap (make-keymap))
-(bind-keys global-keymap "W-w" ws-keymap)
-
-(bind-keys ws-keymap
-	   "Left" workspace-left
-	   "Up" workspace-up
-	   "Right" workspace-right
-	   "Down" workspace-down)
-
 ;; Window Keybindings
 (bind-keys window-keymap
-	   "W-S-c" 'delete-window-safely
+;;	   "W-S-c" 'delete-window-safely
 	   "C-W-m" 'maximize-window
 	   "C-W-w" 'unmaximize-window
 	   "C-W-s" 'shade-window
@@ -247,9 +238,9 @@
 ( defvar-setq xterm-program "gnome-terminal" )
 ( defvar-setq browser-program "firefox" )
 
-
+
 ;; Workapaces
-(defvar-setq workspace-names '("Work" "Web" "Remote" "Lisp" "Media" "Misc"))
+(defvar-setq workspace-names '("Work" "Web" "Remote" "Lisp" "Media" "Chat" "Misc"))
 
 ;; change to corresponding workspace
 (bind-keys global-keymap "W-1" '(activate-workspace 1))
@@ -258,14 +249,22 @@
 (bind-keys global-keymap "W-4" '(activate-workspace 4))
 (bind-keys global-keymap "W-5" '(activate-workspace 5))
 (bind-keys global-keymap "W-6" '(activate-workspace 6))
+(bind-keys global-keymap "W-7" '(activate-workspace 7))
 
-;; send an window to worksapce
-(bind-keys global-keymap "W-F1" '(send-to-workspace 1))
-(bind-keys global-keymap "W-F2" '(send-to-workspace 2))
-(bind-keys global-keymap "W-F3" '(send-to-workspace 3))
-(bind-keys global-keymap "W-F4" '(send-to-workspace 4))
-(bind-keys global-keymap "W-F5" '(send-to-workspace 5))
-(bind-keys global-keymap "W-F6" '(send-to-workspace 6))
+;; Workspace Keymacros
+(define ws-keymap (make-keymap))
+(bind-keys global-keymap "W-w" ws-keymap)
+
+(bind-keys ws-keymap
+	   "Left" workspace-left
+	   "Right" workspace-right
+	   "1" '(send-to-workspace 1)
+	   "2" '(send-to-workspace 2)
+	   "3" '(send-to-workspace 3)
+	   "4" '(send-to-workspace 4)
+	   "5" '(send-to-workspace 5)
+	   "6" '(send-to-workspace 6)
+	   "7" '(send-to-workspace 7))
 
 ;;; switch to last workspace or window using W-`
 (define window-or-workspace? 'window)
@@ -285,9 +284,7 @@
       (if (eq window-or-workspace? 'workspace)
           (select-workspace workspace-last)
         (display-window window-last))))
-
-(bind-keys window-keymap "W-F9" 'run-shell-command)
-
+
 (defun shove-window (dir &optional no-focus)
   "Move focused window 'left, 'right, 'up or 'down to screen edges."
   (interactive)
@@ -308,7 +305,7 @@
 (bind-keys global-keymap "C-M-Right" '(shove-window 'right))
 (bind-keys global-keymap "C-M-Up" '(shove-window 'up))
 (bind-keys global-keymap "C-M-Down" '(shove-window 'down))
-
+
 ;; Animation [Yep, Sawfish Maintainers also are Human Beeings]
 
 ( defvar-setq default-window-animator 'wireframe )
@@ -317,7 +314,7 @@
 ( defvar-setq anim-outline-delay 15 )
 ( defvar-setq move-outline-mode 'cross )
 ( defvar-setq resize-outline-mode 'elliptical )
-
+
 ;;; Window Snooping
 
 (defvar window-snooper-timeout 15)
@@ -384,10 +381,12 @@ Frame Height: \t\t %s pixels
 ( define-command 'window-snooper window-snooper)
 
 ( bind-keys global-keymap "C-S-s" 'window-snooper )
-
+
 ;;  Some programs that are used commonly
 (defvar-setq my-exec-history '("emacs"
 			       "gnome-terminal"
+			       "pidgin"
+			       "skype"
 			       "qterm"
 			       "gimp"
 			       "evince"
@@ -406,3 +405,17 @@ Frame Height: \t\t %s pixels
 
 (define-command 'my-prompt-for-exec my-prompt-for-exec)
 (bind-keys global-keymap "W-p" 'my-prompt-for-exec)
+
+
+(define (my-handle-chat-windows win)
+  (let* ((wm-class (get-x-text-property win 'WM_CLASS))
+	 (wm-role (get-x-text-property win 'WM_WINDOW_ROLE))
+	 (wm-class-str (concat (aref wm-class 1)
+			       "/"
+			       (aref wm-class 0)))
+	 (chat (or (string= wm-class-str "Skype/skype")
+		   (string= wm-class-str "Pidgin/Pidgin"))))
+    (when chat
+      (send-window-to-workspace-from-first win 5 nil 'select))))
+
+(add-hook 'after-add-window-hook my-handle-chat-windows)
