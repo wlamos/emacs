@@ -416,6 +416,8 @@ Frame Height: \t\t %s pixels
 (bind-keys global-keymap "W-p" 'my-prompt-for-exec)
 
 (define (str-idx-in-lst str lst)
+  "Return the index of string STR in a list of strings LST.
+Return nil if STR doesn't exist in LST."
   (let* ((idx 0)
 	 (seq lst))
     (catch 'find
@@ -425,9 +427,14 @@ Frame Height: \t\t %s pixels
 	(setq idx (1+ idx))
 	(setq seq (cdr seq))))))
 
+(define (workspace-id name)
+  "Return the workspace NAME's id, nil if there is no workspace named NAME."
+  (str-idx-in-lst name workspace-names))
+
 (define (dispatch-window-according-to-type win ws-name wm-classes)
-  ""
-  (let* ((ws-idx (str-idx-in-lst ws-name workspace-names))
+  "Dispatch windows according to their WM_CLASS attribute.
+"
+  (let* ((ws-idx (workspace-id ws-name))
 	 (wm-class (get-x-text-property win 'WM_CLASS))
 	 (wm-class-str (concat (aref wm-class 1)
 			       "/"
@@ -446,22 +453,42 @@ Frame Height: \t\t %s pixels
 			   find)))))
     (when (and match ws-idx)
       (send-window-to-workspace-from-first win ws-idx nil 'select))))
-;; FIXME
-;;(dispatch-window-according-to-type
-;; '(("Chat" . ("Skype/skype" "Pidgin/Pidgin"))
-;;   ("Web"  . ("Firefox/Navigator" "Qterm/qterm"))
-;;   ("Mail" . ("Evolution/evolution"))))
 
-(define (dispatch-chat-window win)
-  (dispatch-window-according-to-type win "Chat" '("Skype/skype" "Pidgin/Pidgin")))
-(add-hook 'after-add-window-hook dispatch-chat-window)
+(define (dispatch-window-according-to-alist win lst)
+  (let* ((wm-class (get-x-text-property win 'WM_CLASS))
+	 (wm-class-str (concat (aref wm-class 1)
+			       "/"
+			       (aref wm-class 0))))
+    (catch 'ok
+      (mapcar (lambda (ws-pair)
+		;; check whether the workspace name exists
+		(let* ((ws-idx (workspace-id (car ws-pair)))
+		       (wm-classes (cdr ws-pair))
+		       (match (and ws-idx
+				   (or (and (stringp wm-classes)
+					    (string= wm-class-str wm-classes))
+				      ;; a list  of wm-class names
+				      (and (listp wm-classes)
+					   (let (find)
+					     (catch 'find
+					       (mapcar (lambda (nm)
+							 (when (string= nm wm-class-str)
+							   (setq find t)
+							   (throw 'find t)))
+						       wm-classes))
+					     find))))))
+		  (when match
+		    (send-window-to-workspace-from-first win ws-idx nil 'select)		      
+		    (throw 'ok t))))
+	      lst))))
 
-(define (dispatch-web-window win)
-  (dispatch-window-according-to-type win "Web" '("Firefox/Navigator" "Qterm/qterm")))
-(add-hook 'after-add-window-hook dispatch-web-window)
+(defvar-setq my-dispatch-window-list
+  '(("Chat" . ("Skype/skype" "Pidgin/Pidgin"))
+    ("Web"  . ("Firefox/Navigator " "Qterm/qterm"))
+    ("Mail" . ("Evolution/evolution"))
+    ("Work" . "Putty/putty")))
 
-(define (dispatch-mail-window win)
-  (dispatch-window-according-to-type win "Mail" "Evolution/evolution"))
-
-(add-hook 'after-add-window-hook dispatch-mail-window)
+(add-hook 'after-add-window-hook
+	  (lambda (win)
+	    (dispatch-window-according-to-alist win my-dispatch-window-list)))
 
