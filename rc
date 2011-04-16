@@ -171,7 +171,7 @@
 	   "W-TAB" 'cycle-windows
 	   "C-TAB" 'cycle-windows-backwards
 	   "W-t" `(jump-or-exec "^Terminal" "gnome-terminal")
-	   "W-e" `(jump-or-exec "^Emacs" "emacs")
+	   "W-e" `(jump-or-exec "Emacs@" "emacs")
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
 	   "W-F9" 'run-shell-command
@@ -406,16 +406,44 @@ Frame Height: \t\t %s pixels
 (define-command 'my-prompt-for-exec my-prompt-for-exec)
 (bind-keys global-keymap "W-p" 'my-prompt-for-exec)
 
+(define (str-idx-in-lst str lst)
+  (let* ((idx 0)
+	 (seq lst))
+    (catch 'find
+      (while seq
+	(when (string= str (car seq))
+	  (throw 'find idx))
+	(setq idx (1+ idx))
+	(setq seq (cdr seq))))))
 
-(define (my-handle-chat-windows win)
-  (let* ((wm-class (get-x-text-property win 'WM_CLASS))
-	 (wm-role (get-x-text-property win 'WM_WINDOW_ROLE))
+(define (dispatch-window-according-to-type win ws-name wm-classes)
+  ""
+  (let* ((ws-idx (str-idx-in-lst ws-name workspace-names))
+	 (wm-class (get-x-text-property win 'WM_CLASS))
+;;	 (wm-role (get-x-text-property win 'WM_WINDOW_ROLE))
 	 (wm-class-str (concat (aref wm-class 1)
 			       "/"
 			       (aref wm-class 0)))
-	 (chat (or (string= wm-class-str "Skype/skype")
-		   (string= wm-class-str "Pidgin/Pidgin"))))
-    (when chat
-      (send-window-to-workspace-from-first win 5 nil 'select))))
+	 (match (or (and (stringp wm-classes)
+			 (string= wm-class-str wm-classes))
+		    ;; a list  of wm-class names
+		    (and (listp wm-classes)
+			 (let (find)
+			   (catch 'find
+			     (mapcar (lambda (nm)
+				       (when (string= nm wm-class-str)
+					 (setq find t)
+					 (throw 'find t)))
+				     wm-classes))
+			   find)))))
+    (when (and match ws-idx)
+      (send-window-to-workspace-from-first win ws-idx nil 'select))))
 
-(add-hook 'after-add-window-hook my-handle-chat-windows)
+(define (dispatch-chat-window win)
+  (dispatch-window-according-to-type win "Chat" '("Skype/skype" "Pidgin/Pidgin")))
+(add-hook 'after-add-window-hook dispatch-chat-window)
+
+(define (dispatch-web-window win)
+  (dispatch-window-according-to-type win "Web" "Firefox/Navigator"))
+(add-hook 'after-add-window-hook dispatch-web-window)
+
