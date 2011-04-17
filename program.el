@@ -236,7 +236,7 @@
   (w3m-browse-url (concat root "/" url)))
 
 ;; comment current line
-(defun comment-current-line ()
+(defun toggle-comment-current-line ()
   (interactive)
   (comment-or-uncomment-region (line-beginning-position) (line-end-position)))
 
