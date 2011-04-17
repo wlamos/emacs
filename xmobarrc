@@ -1,0 +1,17 @@
+   Config { 
+       font = "xft:-misc-fixed-*-*-*-*-13-*-*-*-*-*-*-*"
+       , lowerOnStart = True
+       , bgColor = "black"
+       , fgColor = "grey"
+       , position = TopW L 85
+       , commands = [ Run Network "wlan0" ["-L","0","-H","32","--normal","green","--high","red"] 10
+                    , Run Cpu ["-L","15","-H","50","--normal","green","--high","red"] 10
+                    , Run Memory ["-t","Mem: <usedratio>%"] 10
+                    , Run Date "%b %_d %Y %H:%M" "date" 10
+		    , Run MultiCpu ["-t","Cpu: <total0> <total1> <total2> <total3>","-p","3"] 1
+                    , Run TopProc [] 20
+                    ]
+       , sepChar = "%"
+       , alignSep = "}{"
+       , template = "}{ <fc=#9999FF>%multicpu%</fc>  | %top% | %cpu% | %memory% | %wlan0% | %date%"
+       }
