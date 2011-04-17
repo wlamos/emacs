@@ -20,9 +20,9 @@
 ;;(require 'sawfish.wm.viewport)
 (require 'rep.io.timers)
 (require 'sawfish.wm.menus)
-(require 'sawflibs.xmobar)
+;;(require 'sawflibs.xmobar)
 
-(setq *use-features* '(xmobar))
+;;(setq *use-features* '(xmobar))
 
 (define (display-message-with-timeout message timeout)
   (display-message message)
