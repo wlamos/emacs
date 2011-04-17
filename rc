@@ -17,10 +17,12 @@
 (require 'sawfish.wm.ext.pager)
 (require 'sawfish.wm.commands.x-cycle)
 (require 'sawfish.wm.ext.workspace-grid)
-(require 'sawfish.wm.viewport)
+;;(require 'sawfish.wm.viewport)
 (require 'rep.io.timers)
 (require 'sawfish.wm.menus)
-
+(require 'sawflibs.xmobar)
+
+(setq *use-features* '(xmobar))
 
 (define (display-message-with-timeout message timeout)
   (display-message message)
@@ -89,8 +91,8 @@
 (define-command 'close-all-windows close-all-windows)
 
 ;; Window Matchers
-
-( add-window-matcher '( ( WM_CLASS . "^Sawfishpager/sawfishpager$" ) )
+(add-window-matcher 'WM_CLASS "Pidgin/Pidgin" '(depth . 0))
+( add-window-matcher '( ( WM_CLASS . "^Gnome-terminal/sawfishpager$" ) )
        '( ( position . north-east )
           ( fixed-positon . t )
           ( never-maximize . t )
@@ -210,6 +212,8 @@
         (display-window window-last))))
 
 
+
+
 ;; Global Keybindings
 ;; FIXME
 ;; "W-" keys should be only for those used heavily keys
@@ -230,7 +234,7 @@
 	   "W-e" `(jump-or-exec "Emacs@" "emacs")
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
-	   "W-i" `(jump-or-exec "Twitter@Emacs" "emacs")
+	   "W-i" `(jump-or-exec "Twitter@Emacs" '(wl-exec-with-name "emacs" "Twitter@Emacs" "Web"))
 	   "W-F9" 'run-shell-command
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
 	   "W-F11" `(jump-or-exec "shell@power102" '(wl-exec-with-name "gnome-terminal" "shell@power102" "Work"))
@@ -494,4 +498,20 @@ Return nil if STR doesn't exist in LST."
 (add-hook 'after-add-window-hook
 	  (lambda (win)
 	    (dispatch-window-according-to-alist win my-dispatch-window-list)))
+
+;; my test functions
+;; (define (test-get-window regex)
+;;   (let ((win (get-window-by-name regex #:regex t)))
+;;     (if win
+;; 	(display-message-with-timeout (concat "find window: "
+;; 					      regex) 3)
+;;       (display-message-with-timeout (concat "no window named: "
+;; 					    regex) 3))))
+;; (test-get-window "Twitter@Emacs")
+;; (test-get-window "Terminal")
+;; (test-get-window "Gnus")
+;; (test-get-window "Twitter")
+
+
+;;(activate-xmobar "/home/velen/.xmobarrc")
 

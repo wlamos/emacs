@@ -377,6 +377,5 @@
 (eval-after-load "twittering-mode"
   '(progn
      (setq twittering-use-master-password t)
-     (setq frame-title-format '("Twitter@Emacs"))
      (twittering-icon-mode 1)))
 
