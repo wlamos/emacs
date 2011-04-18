@@ -269,7 +269,7 @@
 
 ;; Window Keybindings
 (bind-keys window-keymap
-;;	   "W-S-c" 'delete-window-safely
+	   "W-S-c" 'delete-window-safely
 	   "C-W-m" 'maximize-window
 	   "C-W-w" 'unmaximize-window
 	   "C-W-s" 'shade-window
