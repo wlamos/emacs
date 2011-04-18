@@ -92,6 +92,8 @@
 
 ;; Window Matchers
 (add-window-matcher 'WM_CLASS "Pidgin/Pidgin" '(depth . 0))
+(add-window-matcher 'WM_CLASS "Skype/skype" '(depth . 0))
+
 ( add-window-matcher '( ( WM_CLASS . "^Gnome-terminal/sawfishpager$" ) )
        '( ( position . north-east )
           ( fixed-positon . t )
