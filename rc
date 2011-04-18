@@ -495,7 +495,8 @@ Return nil if STR doesn't exist in LST."
   '(("Chat" . ("Skype/skype" "Pidgin/Pidgin"))
     ("Web"  . ("Firefox/Navigator" "Qterm/qterm" "Google-chrome/google-chrome"))
     ("Mail" . ("Evolution/evolution"))
-    ("Work" . "Putty/putty")))
+    ("Work" . "Putty/putty")
+    ("Misc" . ("VirtualBox/Qt-subapplication"))))
 
 (add-hook 'after-add-window-hook
 	  (lambda (win)
