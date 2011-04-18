@@ -21,6 +21,10 @@
 ;;make dired can copy and delete directory
 (eval-after-load "dired"
   '(progn
+     (require 'dired-x)
+     ;; omit hidden files
+     (setq dired-omit-files "^\\.?#\\|^\\.$\\|^\\.\\.$\\|^\\..+$")
+     
      (setq dired-recursive-copies 'top)
      (setq dired-recursive-deletes 'top)
      ;; M-up to goto parent directory
@@ -32,7 +36,7 @@
 	       (lambda ()
 		 ;; W -> use emacs-w3m to browse the file of current line
 		 (define-key dired-mode-map (kbd "W") 'my-browse-with-emacs-w3m)
-		 ))
+		 (dired-omit-mode 1)))
      ;; sort function for dired mode, from ann77
      ;; s s : sort by Size of files
      ;; s x : sort by eXtension file name of the files
@@ -60,7 +64,6 @@
 
      (add-hook 'dired-load-hook
 	       (lambda ()
-		 (load "dired-x")
 		 ;; My preferences for default shell commands
 		 ;; set the default command to open a file
 		 ;; use ! to open that file in a shell
@@ -354,7 +357,7 @@
 ;;(load "~/work/odesk/vapniks/odesk/one-key/one-key-ext.el")
 
 (load "~/.emacs.d/mytramp.el")
-(load "~/.emacs.d/config/bbdb-config.el")
+;;(load "~/.emacs.d/config/bbdb-config.el")
 
 ;;(require 'top-mode)
 
