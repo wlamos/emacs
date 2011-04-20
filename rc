@@ -112,15 +112,17 @@
 	  (lambda (current)
 	    (setq last-created-window current)))
 
-(define (wl-exec-with-name cmd name #!optional ws-name)
-  "If ws-name is provided, put the newly created window to workspace with name ws-name"
+(define (wl-exec-with-name cmd name #!optional ws-name func)
+  "If ws-name is provided, put the newly created window to workspace with name ws-name
+If FUNC is non-nil, call FUNC after the rename of newly created window."
   (system (concat cmd " &"))
   (make-timer (lambda ()
 		(if ws-name
 		    (let ((ws-idx (str-idx-in-lst ws-name workspace-names)))
 		      (when ws-idx
 			(send-window-to-workspace-from-first last-created-window ws-idx nil 'select))))
-		(rename-window last-created-window name)) 1))
+		(rename-window last-created-window name)
+		(funcall func last-created-window)) 1))
 
 (define-command 'wl-exec-with-name wl-exec-with-name)
 
@@ -239,8 +241,16 @@
 	   "W-i" `(jump-or-exec "Twitter@Emacs" '(wl-exec-with-name "emacs" "Twitter@Emacs" "Web"))
 	   "W-F9" 'run-shell-command
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
-	   "W-F11" `(jump-or-exec "shell@power102" '(wl-exec-with-name "gnome-terminal" "shell@power102" "Work"))
-	   "W-F12" `(jump-or-exec "emacs@power102" '(wl-exec-with-name "gnome-terminal" "emacs@power102" "Work"))
+	   "W-F11" `(jump-or-exec "shell@power102" '(wl-exec-with-name "gnome-terminal" "shell@power102" "Work"
+								       (lambda ()
+									 (mapcar (lambda (e)
+										   (synthesize-event e last-created-window))
+										 '("s" "a" "p" "RET")))))
+	   "W-F12" `(jump-or-exec "emacs@power102" '(wl-exec-with-name "gnome-terminal" "emacs@power102" "Work"
+								       (lambda ()
+									 (mapcar (lambda (e)
+										   (synthesize-event e last-created-window))
+										 '("s" "a" "p" "RET")))))
 	   "C-S-q" 'close-all-windows)
 
 ;; Window Keybindings
