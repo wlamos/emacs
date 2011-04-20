@@ -216,6 +216,44 @@ If FUNC is non-nil, call FUNC after the rename of newly created window."
         (display-window window-last))))
 
 
+(define (my-jump-or-exec pred func)
+  "Jump to a window win with (funcall pred win) true, or exec (funcall func)"
+  (let ((win (catch 'find
+	       (mapc (lambda (w)
+		       (when (funcall pred w)
+			 (throw 'find w)))
+		     (managed-windows))
+	       nil)))
+    (if win
+	(display-window win)
+      (funcall func))))
+
+(define-command 'my-jump-or-exec my-jump-or-exec)
+
+(define (my-jump-or-exec-in-ws ws regex prog #!key match-class)
+  "Jump to a window in workspace WS, or when absent, start program."
+  (let ((ws-idx (str-idx-in-lst ws workspace-names)))
+    (when ws-idx
+      (select-workspace-from-first ws-idx))
+    (let* ((wins (workspace-windows current-workspace 'include-iconified))
+	   (win (catch 'find
+		  (mapc (lambda (w)
+			  (let ((rlt (if match-class
+					 (string-match regex (window-class w))
+				       (string-match regex (window-name w)))
+				     ))
+			    (when rlt
+			      (throw 'find w))))
+			wins)
+		  (display-message "here!")
+		  nil)))
+      (if win
+	  (display-message-with-timeout "find!" 3))
+      (if win
+	  (display-window win)
+	(system (concat prog "&"))))))
+
+(define-command 'my-jump-or-exec-in-ws my-jump-or-exec-in-ws)
 
 
 ;; Global Keybindings
@@ -235,10 +273,12 @@ If FUNC is non-nil, call FUNC after the rename of newly created window."
 	   "W-TAB" 'cycle-windows
 	   "C-TAB" 'cycle-windows-backwards
 	   "W-t" `(jump-or-exec "^Terminal" "gnome-terminal")
-	   "W-e" `(jump-or-exec "Emacs@" "emacs")
+	   ;; normal emacs frame
+	   "W-e" `(my-jump-or-exec-in-ws "Work" "Emacs" "emacs" #:match-class t)
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
-	   "W-i" `(jump-or-exec "Twitter@Emacs" '(wl-exec-with-name "emacs" "Twitter@Emacs" "Web"))
+	   ;; Twitter emacs frame
+	   "W-i" `(my-jump-or-exec-in-ws "Chat" "Emacs" "emacs" #:match-class t)
 	   "W-F9" 'run-shell-command
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
 	   "W-F11" `(jump-or-exec "shell@power102" '(wl-exec-with-name "gnome-terminal" "shell@power102" "Work"
