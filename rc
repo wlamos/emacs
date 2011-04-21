@@ -279,6 +279,7 @@ If FUNC is non-nil, call FUNC after the rename of newly created window."
 	   "W-i" `(my-jump-or-exec-in-ws "Chat" "Emacs" "emacs" #:match-class t)
 	   ;; Lisp dev emacs frame
 	   "W-l" `(my-jump-or-exec-in-ws "Lisp" "Emacs" "emacs" #:match-class t)
+	   "W-m" '(my-jump-or-exec-in-ws "Mail" "Evolution" "evolution" #:match-class t)
 	   "W-F9" 'run-shell-command
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
 	   "W-F11" `(jump-or-exec "shell@power102" '(wl-exec-with-name "gnome-terminal" "shell@power102" "Work"
