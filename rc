@@ -272,10 +272,13 @@ If FUNC is non-nil, call FUNC after the rename of newly created window."
 	   "W-t" `(jump-or-exec "^Terminal" "gnome-terminal")
 	   ;; normal emacs frame
 	   "W-e" `(my-jump-or-exec-in-ws "Work" "Emacs" "emacs" #:match-class t)
+	   ;; gnus emacs frame
 	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
 	   ;; Twitter emacs frame
 	   "W-i" `(my-jump-or-exec-in-ws "Chat" "Emacs" "emacs" #:match-class t)
+	   ;; Lisp dev emacs frame
+	   "W-l" `(my-jump-or-exec-in-ws "Lisp" "Emacs" "emacs" #:match-class t)
 	   "W-F9" 'run-shell-command
 	   "W-F10" `(jump-or-exec "^pwrgrp100" "gnome-terminal")
 	   "W-F11" `(jump-or-exec "shell@power102" '(wl-exec-with-name "gnome-terminal" "shell@power102" "Work"
