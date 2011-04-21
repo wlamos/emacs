@@ -245,10 +245,7 @@ If FUNC is non-nil, call FUNC after the rename of newly created window."
 			    (when rlt
 			      (throw 'find w))))
 			wins)
-		  (display-message "here!")
 		  nil)))
-      (if win
-	  (display-message-with-timeout "find!" 3))
       (if win
 	  (display-window win)
 	(system (concat prog "&"))))))
