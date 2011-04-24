@@ -20,7 +20,31 @@
 
 ;;; Commentary:
 
-;; 
+;; Installation
+
+;; 1. Put this el file to your `load-path'
+
+;; 2. Put the following to your .emacs file:
+;;
+;; (require 'sawfish-util)
+;;
+;; 3. Configure the directories containing the sawfish lisp files, e.g.
+;;    - the directory contains the sawfish lisp files
+;;    - the directory contains the rep lisp files
+;;    - the directory contains your ownself lisp files
+;;
+;; The following is an example setting:
+;;
+;; (setq sawfish-lisp-dir '("~/.sawfish/"
+;;			    "/usr/local/share/sawfish/1.8.0/lisp"
+;;			    "/usr/local/share/rep/0.91.1/lisp"))
+
+;; List of commands
+;;
+;; - sawfish-jump-to-function-def, which is bound to M-. f
+;;
+;; - sawfish-jump-to-variable-def, which is bound to M-. v
+;;
 
 ;;; Code:
 (require 'sawfish)
