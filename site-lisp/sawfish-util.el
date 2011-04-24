@@ -51,7 +51,11 @@ default value for the read."
   (sawfish-find-ask 'sawfish-variable-at-point "variable" 'sawfish-variable-list))
 
 (defun sawfish-quote-func (func)
-  (concat "\"\\([ \t]*define[ \t]+\\([ \t]*" (symbol-name func) "([ \t]*\\)|[ \t]+)\""))
+  (concat "\"\\([ \t]*(define[ \t]+\\([ \t]*"
+	  (symbol-name func)
+	  "([ \t]*\\)|[ \t]+)|defmacro[ \t]+"
+	  (symbol-name func)
+	  "[ \t]+\\()\""))
 
 (defun sawfish-find-function (func dirs)
   "Find FUNC under directory DIRS."
