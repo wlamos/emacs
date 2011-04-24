@@ -25,8 +25,18 @@
 ;;; Code:
 (require 'sawfish)
 
-(defvar sawfish-lisp-dir '("/usr/local/share/sawfish/1.8.0/lisp" "~/.sawfish")
+(defvar sawfish-lisp-dir '("~/.sawfish")
   "A list of paths that contain sawfish lisp codes.")
+
+(defun sawfish-filter-legal-dir (dirs)
+  "Filter out the illegal directories in DIR.
+A directory is illegal when it's not a directory or it's not readable for
+current user."
+  (remove-if-not #'(lambda (dir)
+		     (when (and (file-directory-p dir)
+				(file-readable-p dir))
+		       dir))
+		 dirs))
 
 ;; Stolen from sawfish.el
 (defun sawfish-find-ask (default description lookups)
@@ -51,6 +61,7 @@ default value for the read."
   (sawfish-find-ask 'sawfish-variable-at-point "variable" 'sawfish-variable-list))
 
 (defun sawfish-quote-func (func)
+  "Return the regexp to grep FUNC."
   (concat "\"\\([ \t]*(define[ \t]+\\([ \t]*"
 	  (symbol-name func)
 	  "([ \t]*\\)|[ \t]+)|defmacro[ \t]+"
@@ -62,6 +73,7 @@ default value for the read."
   (grep (concat "egrep " (sawfish-quote-func func) " -nH --exclude=\"*.jlc\" -R " dirs)))
 
 (defun sawfish-quote-var (var)
+  "Return the regexp to grep variable VAR."
   (concat "\"\\([ \t]*(define|defvar-setq)[ \t]+" (symbol-name var) "[ \t]*([ \t]|$)\""))
 
 (defun sawfish-find-variable (var dirs)
@@ -72,14 +84,19 @@ default value for the read."
 (defun sawfish-jump-to-function-def (function)
   "Jump to definition of FUNCTION."
   (interactive (list (sawfish-find-ask-function)))
-  (sawfish-find-function function (mapconcat #'(lambda (a) a) sawfish-lisp-dir " ")))
+  (sawfish-find-function function (mapconcat #'(lambda (a) a)
+					     (sawfish-filter-legal-dir sawfish-lisp-dir)
+					     " ")))
 
 ;;;###autoload
 (defun sawfish-jump-to-variable-def (var)
   "Jump to definition of variable VAR"
   (interactive (list (sawfish-find-ask-variable)))
-  (sawfish-find-variable var (mapconcat #'(lambda (a) a) sawfish-lisp-dir " ")))
+  (sawfish-find-variable var (mapconcat #'(lambda (a) a)
+					(sawfish-filter-legal-dir sawfish-lisp-dir)
+					" ")))
 
+;; Keybindings
 (define-key sawfish-mode-map [(meta .) ?f] 'sawfish-jump-to-function-def)
 (define-key sawfish-mode-map [(meta .) ?v] 'sawfish-jump-to-variable-def)
 
