@@ -247,12 +247,13 @@
 ;;; Common Lisp Dev
 ;;; SLIME setting
 (add-to-list 'load-path "~/.emacs.d/site-lisp/slime/")
+(load (expand-file-name "~/quicklisp/slime-helper.el"))
 (setq inferior-lisp-program "/usr/bin/sbcl")
-(require 'slime-autoloads)
+;;(require 'slime-autoloads)
 (slime-setup '(slime-fancy slime-scratch slime-editing-commands slime-asdf))
 (slime-setup '(slime-repl))
 (setq slime-lisp-implementations
-           '((sbcl ("/usr/bin/sbcl" "--core" "~/.emacs.d/sbcl.core-with-swank")
+           '((sbcl ("/usr/bin/sbcl" "--core" "/home/velen/.emacs.d/sbcl.core-with-swank")
 		   :init (lambda (port-file _)
 			   (format "(swank:start-server %S)\n" port-file)))
 	     (cmucl ("cmucl" "-quiet"))))
@@ -392,4 +393,8 @@
 	       '(lambda ()
 		  (make-local-variable 'company-backends)
 		  (setq company-backends '(company-files))))))
+(require 'sawfish-util)
+(setq sawfish-lisp-dir '("/home/velen/.sawfish/"
+			 "/usr/local/share/sawfish/1.8.0/lisp"
+			 "/usr/local/share/rep/0.91.1/lisp"))
 
