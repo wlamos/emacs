@@ -273,7 +273,7 @@ If FUNC is non-nil, call FUNC after the rename of newly created window."
 	   ;; normal emacs frame
 	   "W-e" `(my-jump-or-exec-in-ws "Work" "Emacs" "emacs" #:match-class t)
 	   ;; gnus emacs frame
-	   "W-g" `(jump-or-exec "^Gnus@Emacs" "emacs")
+	   "W-g" `(my-jump-or-exec-in-ws "Mail" "Emacs" "emacs" #:match-class t)
 	   "W-f" `(jump-or-exec "Mozilla Firefox" "firefox")
 	   ;; Twitter emacs frame
 	   "W-i" `(my-jump-or-exec-in-ws "Chat" "Emacs" "emacs" #:match-class t)
@@ -312,7 +312,7 @@ If FUNC is non-nil, call FUNC after the rename of newly created window."
 	   "q" `(jump-or-exec "QTerm" "qterm")
 	   "v" `(jump-or-exec "Remote Desktop Viewer" "vinagre") 	   ;; VNC viewer
 	   "V" `(jump-or-exec "VirtualBox" "VirtualBox")
-	   "p" `(jump-or-exec "PuTTY" "putty")
+	   "p" `(jump-or-exec "PuTTY" "putty -load Apache-newGate")
 	   "s" `(jump-or-exec "Skype" "skype")
 	   "a" `(jump-or-exec "Adobe Reader$" "acroread")
 	   "g" `(jump-or-exec "Google Chrome" "google-chrome")
