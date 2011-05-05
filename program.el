@@ -246,20 +246,28 @@
 
 ;;; Common Lisp Dev
 ;;; SLIME setting
-(add-to-list 'load-path "~/.emacs.d/site-lisp/slime/")
+(load (expand-file-name "~/quicklisp/slime-helper.el"))
 (setq inferior-lisp-program "/usr/bin/sbcl")
-(require 'slime-autoloads)
 (slime-setup '(slime-fancy slime-scratch slime-editing-commands slime-asdf))
 (slime-setup '(slime-repl))
-(setq slime-lisp-implementations
-           '((sbcl ("/usr/bin/sbcl" "--core" "~/.emacs.d/sbcl.core-with-swank")
-		   :init (lambda (port-file _)
-			   (format "(swank:start-server %S)\n" port-file)))
-	     (cmucl ("cmucl" "-quiet"))))
+;; (setq slime-lisp-implementations
+;;            '((sbcl ("/usr/bin/sbcl" "--core" "/home/velen/.emacs.d/sbcl.core-with-swank")
+;; 		   :init (lambda (port-file _)
+;; 			   (format "(swank:start-server %S)\n" port-file)))
+;; 	     (cmucl ("cmucl" "-quiet"))))
+
+(defun my-slime-tab ()
+  " "
+  (interactive)
+  (if (or (bolp)
+	  (= (char-before) ?\t)
+	  (= (char-before) ?\ ))
+      (indent-for-tab-command)
+    (slime-complete-symbol)))
 
 (add-hook 'slime-mode-hook
 	  (lambda ()
-	    (local-set-key [(tab)] 'slime-complete-symbol)))
+	    (local-set-key [(tab)] 'my-slime-tab)))
 
 (setq common-lisp-hyperspec-root "/usr/share/doc/hyperspec/")
 
@@ -392,4 +400,8 @@
 	       '(lambda ()
 		  (make-local-variable 'company-backends)
 		  (setq company-backends '(company-files))))))
+(require 'sawfish-util)
+(setq sawfish-lisp-dir '("/home/velen/.sawfish/"
+			 "/usr/local/share/sawfish/1.8.0/lisp"
+			 "/usr/local/share/rep/0.91.1/lisp"))
 

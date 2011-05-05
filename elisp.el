@@ -276,10 +276,10 @@
 ;;(require 'weblogger)
 
 ;; cn-weather
-(when (require-maybe 'cn-weather)
-  (setq cn-weather-city "北京")
-  (cn-weather)
-  (display-cn-weather-mode t))
+;; (when (require-maybe 'cn-weather)
+;;   (setq cn-weather-city "北京")
+;;   (cn-weather)
+;;   (display-cn-weather-mode t))
 
 ;;; One-key settings
 ;;; How to according current buffer's major mode to select
