@@ -357,7 +357,7 @@
 ;;(load "~/work/odesk/vapniks/odesk/one-key/one-key-ext.el")
 
 (load "~/.emacs.d/mytramp.el")
-;;(load "~/.emacs.d/config/bbdb-config.el")
+(load "~/.emacs.d/config/bbdb-config.el")
 
 ;;(require 'top-mode)
 
