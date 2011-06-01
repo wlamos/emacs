@@ -9,6 +9,8 @@
 		("\\.py$" . python-mode)
 		("\\.l$" . flex-mode)
 		("\\.y$" . bison-mode)
+		("\\.tr$" . text-mode)
+		("\\.tr.i$" . text-mode)
 		("Make.apache" . makefile-mode)
 		("Make.exe.apache" . makefile-mode)
 		) auto-mode-alist))
@@ -162,7 +164,7 @@
 
 ;; nxml-mode
 ;;(require 'rng-auto)
-(load "~/.emacs.d/site-lisp/nxml-mode-20041004/rng-auto.el")
+(load "~/work/github/emacs/site-lisp/nxml-mode-20041004/rng-auto.el")
 (setq auto-mode-alist
       (cons '("\\.\\(xml\\|xsl\\|rng\\|xhtml\\)\\'" . nxml-mode)
 	    auto-mode-alist))
