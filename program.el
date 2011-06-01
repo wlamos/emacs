@@ -164,7 +164,7 @@
 
 ;; nxml-mode
 ;;(require 'rng-auto)
-(load "~/work/github/emacs/site-lisp/nxml-mode-20041004/rng-auto.el")
+(load "rng-auto.el")
 (setq auto-mode-alist
       (cons '("\\.\\(xml\\|xsl\\|rng\\|xhtml\\)\\'" . nxml-mode)
 	    auto-mode-alist))
@@ -243,13 +243,15 @@
   (comment-or-uncomment-region (line-beginning-position) (line-end-position)))
 
 ;; smart-compile
-(require 'smart-compile)
+(require-maybe 'smart-compile)
 
 
 ;;; Common Lisp Dev
 ;;; SLIME setting
 (load (expand-file-name "~/quicklisp/slime-helper.el"))
-(setq inferior-lisp-program "/usr/bin/sbcl")
+(if (eq system-type 'darwin)
+    (setq inferior-lisp-program "~/bin/sbcl")
+  (setq inferior-lisp-program "/usr/bin/sbcl"))
 (slime-setup '(slime-fancy slime-scratch slime-editing-commands slime-asdf))
 (slime-setup '(slime-repl))
 ;; (setq slime-lisp-implementations
@@ -390,20 +392,21 @@
 		    (local-set-key (kbd "RET") 'newline-and-indent)))))
 
 
-;; Sawfish setting
-(autoload 'sawfish-mode "sawfish" "sawfish-mode" t)
-(setq auto-mode-alist (cons '("\\.sawfishrc$"  . sawfish-mode) auto-mode-alist)
-      auto-mode-alist (cons '("\\.jl$"         . sawfish-mode) auto-mode-alist)
-      auto-mode-alist (cons '("\\.sawfish/rc$" . sawfish-mode) auto-mode-alist))
+;; Sawfish setting, only turn on when it's not macos
+(unless (eq system-type 'darwin)
+  (autoload 'sawfish-mode "sawfish" "sawfish-mode" t)
+  (setq auto-mode-alist (cons '("\\.sawfishrc$"  . sawfish-mode) auto-mode-alist)
+	auto-mode-alist (cons '("\\.jl$"         . sawfish-mode) auto-mode-alist)
+	auto-mode-alist (cons '("\\.sawfish/rc$" . sawfish-mode) auto-mode-alist))
 
-(eval-after-load "sawfish-mode"
-  '(progn
-     (add-hook 'sawfish-mode-hook
-	       '(lambda ()
-		  (make-local-variable 'company-backends)
-		  (setq company-backends '(company-files))))))
-(require 'sawfish-util)
-(setq sawfish-lisp-dir '("/home/velen/.sawfish/"
-			 "/usr/local/share/sawfish/1.8.0/lisp"
-			 "/usr/local/share/rep/0.91.1/lisp"))
+  (eval-after-load "sawfish-mode"
+    '(progn
+       (add-hook 'sawfish-mode-hook
+		 '(lambda ()
+		    (make-local-variable 'company-backends)
+		    (setq company-backends '(company-files))))))
+  (require 'sawfish-util)
+  (setq sawfish-lisp-dir '("/home/velen/.sawfish/"
+			   "/usr/local/share/sawfish/1.8.0/lisp"
+			   "/usr/local/share/rep/0.91.1/lisp")))
 
