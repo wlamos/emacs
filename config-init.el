@@ -1,13 +1,11 @@
 (setq inhibit-default-init t)
-(setq load-path (append
-		 '("~/work/github/emacs"
-		   "~/work/github/emacs/site-lisp"
-		   "~/work/github/emacs/site-lisp/color-theme"
-		   "~/work/github/emacs/site-lisp/nxml-mode-20041004"
-		   "~/work/github/emacs/site-lisp/company"
-		   "~/share/emacs/site-lisp"
-		   )
-		 load-path))
+
+(dolist (dir (list my-config-dir
+		   (concat my-config-dir "site-lisp/")))
+  (add-to-list 'load-path dir))
+
+(let ((default-directory (concat my-config-dir "site-lisp/")))
+  (normal-top-level-add-subdirs-to-load-path))
 
 (defmacro require-maybe (feature &optional file)
   "*Try to require FEATURE, but don't signal an error if `require' fails."
@@ -27,8 +25,6 @@
 			'("mycustom.el"
 			  "elisp.el"
 			  "program.el"
-			  "func.el"
-			  )))
-		  
+			  "func.el")))
 
 
