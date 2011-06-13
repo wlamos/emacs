@@ -1,5 +1,8 @@
 This is my personal emacs config package!
 
+NOTE: My Emacs version is 24 (i.e. the dev version). So maybe this
+config package doesn't work properly for other Emacs versions.
+
 To use this package, add the following to your .emacs file:
 
 (setq my-config-dir "path/to/this/package/")
