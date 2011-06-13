@@ -1,0 +1,6 @@
+This is my personal emacs config package!
+
+To use this package, add the following to your .emacs file:
+
+(setq my-config-dir "path/to/this/package")
+(load (concat my-config-dir "config-init.el"))

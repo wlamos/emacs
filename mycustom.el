@@ -41,7 +41,7 @@
 (setq fill-column 80)
 
 ;;
-(setq major-mode 'text-mode)
+;;(setq major-mode 'text-mode)
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
 ;;
@@ -51,8 +51,8 @@
 (setq auto-image-file-mode 1)
 
 ;;
-(and (fboundp 'menu-bar-mode)   (menu-bar-mode   -1))
-(and (fboundp 'tool-bar-mode)   (tool-bar-mode   -1))
+(and (fboundp 'menu-bar-mode)   (menu-bar-mode -1))
+(and (fboundp 'tool-bar-mode)   (tool-bar-mode -1))
 (scroll-bar-mode -1)
 
 ;; setup parentheses handling
@@ -138,4 +138,7 @@
       ["子" "丑" "寅" "卯" "辰" "巳" "午" "未" "申" "酉" "戌" "亥"])
 
 (setq exec-path (cons "~/bin/" exec-path))
-
+(if (eq system-type 'darwin)
+    (setq exec-path (append '("/usr/local/bin"
+			      "/opt/local/bin")
+			    exec-path)))

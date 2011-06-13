@@ -185,7 +185,7 @@
 (define-key global-map "\C-cl" 'org-store-link)
 (define-key global-map "\C-ca" 'org-agenda)
 (define-key global-map "\C-cb" 'org-iswitchb)
-(setq org-agenda-files '("~/work/Org/todo.org"))
+(setq org-agenda-files '("~/work/github/notes/todo.org"))
 (eval-after-load "org"
  '(progn
     (add-hook 'org-mode 'turn-on-font-lock)
