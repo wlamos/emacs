@@ -28,3 +28,9 @@
 			  "func.el")))
 
 
+(unless (server-running-p)
+  (server-start))
+
+(unless (and (fboundp 'daemonp) (daemonp))
+  (autoload 'dta-hook-up "desktopaid.el" "Desktop Aid" t)
+  (dta-hook-up))
