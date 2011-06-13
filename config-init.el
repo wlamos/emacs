@@ -32,5 +32,7 @@
   (server-start))
 
 (unless (and (fboundp 'daemonp) (daemonp))
+  (unless (file-exists-p "~/.desktopaid/")
+    (make-directory "~/.desktopaid/"))
   (autoload 'dta-hook-up "desktopaid.el" "Desktop Aid" t)
   (dta-hook-up))
