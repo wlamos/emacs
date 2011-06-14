@@ -138,4 +138,8 @@
       ["子" "丑" "寅" "卯" "辰" "巳" "午" "未" "申" "酉" "戌" "亥"])
 
 (setq exec-path (cons "~/bin/" exec-path))
+(if (eq system-type 'darwin)
+    (setq exec-path (append '("/usr/local/bin"
+			      "/opt/local/bin")
+			    exec-path)))
 
