@@ -1,6 +1,15 @@
 This is my personal emacs config package!
 
+NOTE: My Emacs version is 24 (i.e. the dev version). So maybe this
+config package doesn't work properly for other Emacs versions.
+
 To use this package, add the following to your .emacs file:
 
-(setq my-config-dir "path/to/this/package")
+(setq my-config-dir "path/to/this/package/")
 (load (concat my-config-dir "config-init.el"))
+
+If you want to change the font size, you can use the following:
+
+(set-face-attribute 'default nil :height 125)
+
+Just tune the :height to a proper value
