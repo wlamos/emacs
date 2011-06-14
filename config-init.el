@@ -15,6 +15,18 @@
   "*Do something if FUNCTION is available."
   `(when (fboundp ,func) ,foo))
 
+(defmacro load-if-exist (file)
+  "Load FILE if it exists"
+  `(when (file-exists-p ,file)
+     (load-file ,file)))
+
+(defun load-files-if-exist (files)
+  "Load files in list FILES if they exist"
+  (mapcar #'(lambda (file)
+	      (when (file-exists-p file)
+		(load-file file)))
+	  files))
+
 (defun load-file-list (file-list)
   "*Load file list FILE-LIST in order."
   (dolist (file file-list)

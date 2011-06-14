@@ -352,12 +352,8 @@
 				    (local-set-key (kbd "<f7>") 'wl-compile)))))
 
 
-;;(require 'eimp)
-;;(load "look-mode")
-;;(load "~/work/odesk/vapniks/odesk/one-key/one-key-ext.el")
-
-(load "~/.emacs.d/mytramp.el")
-(load "~/.emacs.d/config/bbdb-config.el")
+(load-if-exist "~/.emacs.d/mytramp.el")
+(load-if-exist "~/.emacs.d/bbdb-config.el")
 
 ;;(require 'top-mode)
 
