@@ -153,7 +153,7 @@ two heading lines, otherwise, the normal enter key."
           (outline-end-of-subtree)
           (if (null (third heads))
               (org-insert-heading-respect-content)
-            (org-insert-todo-heading 0))
+            (org-insert-todo-heading 0 t))
           (org/ext-adjust-level level)
           
           (when moveup                  ; when cursor is at the beginning of the line, move it up
