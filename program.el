@@ -30,7 +30,8 @@
 (eval-after-load "cc-mode"
   '(progn
      (require 'cedet)
-     (require 'semantic-gcc)
+     ;;(require-maybe 'semantic-gcc)
+     ;;(load (concat my-config-dir "site-lisp/cedet-1.0/common/cedet.el"))
      ;; Enable EDE (Project Management) features
      (global-ede-mode 1)
      (semantic-load-enable-code-helpers)
@@ -249,7 +250,11 @@
 ;;; SLIME setting
 (load (expand-file-name "~/quicklisp/slime-helper.el"))
 (if (eq system-type 'darwin)
-    (setq inferior-lisp-program "~/bin/sbcl")
+    (progn
+     (setq inferior-lisp-program "~/bin/sbcl")
+     (setenv "PATH" (concat "~/bin" ":" (getenv "PATH")))
+     (setenv "SBCL_HOME" "/Users/wenliang/lib/sbcl")
+     )
   (setq inferior-lisp-program "/usr/bin/sbcl"))
 (slime-setup '(slime-fancy slime-scratch slime-editing-commands slime-asdf))
 (slime-setup '(slime-repl))
