@@ -198,7 +198,6 @@
      (defun load-ropemacs ()
        "Load pymacs and ropemacs"
        (interactive)
-       (setenv "PYMACS_PYTHON" "python2.6")
        (require 'pymacs)
        (autoload 'pymacs-load "pymacs" nil t)
        (autoload 'pymacs-eval "pymacs" nil t)
