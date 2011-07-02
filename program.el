@@ -254,11 +254,9 @@
     (progn
      (setq inferior-lisp-program "~/bin/sbcl")
      (setenv "PATH" (concat "~/bin" ":" (getenv "PATH")))
-     (setenv "SBCL_HOME" "/Users/wenliang/lib/sbcl")
-     )
+     (setenv "SBCL_HOME" "/Users/wenliang/lib/sbcl"))
   (setq inferior-lisp-program "/usr/bin/sbcl"))
-(slime-setup '(slime-fancy slime-scratch slime-editing-commands slime-asdf))
-(slime-setup '(slime-repl))
+(slime-setup '(slime-fancy slime-scratch slime-editing-commands slime-asdf slime-repl))
 ;; (setq slime-lisp-implementations
 ;;            '((sbcl ("/usr/bin/sbcl" "--core" "/home/velen/.emacs.d/sbcl.core-with-swank")
 ;; 		   :init (lambda (port-file _)
