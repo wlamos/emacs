@@ -249,13 +249,12 @@
 ;;; Common Lisp Dev
 ;;; SLIME setting
 (load (expand-file-name "~/quicklisp/slime-helper.el"))
-(if (eq system-type 'darwin)
-    (progn
-     (setq inferior-lisp-program "~/bin/sbcl")
-     (setenv "PATH" (concat "~/bin" ":" (getenv "PATH")))
-     (setenv "SBCL_HOME" "/Users/wenliang/lib/sbcl"))
-  (setq inferior-lisp-program "/usr/bin/sbcl"))
+(setq inferior-lisp-program "~/bin/sbcl")
+(setenv "PATH" (concat "~/bin" ":" (getenv "PATH")))
+(setenv "SBCL_HOME" (expand-file-name "~/lib/sbcl"))
 (slime-setup '(slime-fancy slime-scratch slime-editing-commands slime-asdf slime-repl))
+(setq slime-complete-symbol*-fancy t)
+(setq slime-complete-symbol-function 'slime-fuzzy-complete-symbol)
 ;; (setq slime-lisp-implementations
 ;;            '((sbcl ("/usr/bin/sbcl" "--core" "/home/velen/.emacs.d/sbcl.core-with-swank")
 ;; 		   :init (lambda (port-file _)
@@ -263,7 +262,7 @@
 ;; 	     (cmucl ("cmucl" "-quiet"))))
 
 (defun my-slime-tab ()
-  " "
+  "Use tab to indent and complete symbols."
   (interactive)
   (if (or (bolp)
 	  (= (char-before) ?\t)
