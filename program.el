@@ -180,45 +180,10 @@
 
 
 ;;python mode
-(setq interpreter-mode-alist (cons '("python" . python-mode)
-				   interpreter-mode-alist))
-(autoload 'python-mode "python-mode" "Python editing mode." t)
+;;use https://github.com/gabrielelanaro/emacs-for-python
+(when (intern-soft "my-epy-dir")
+  (load (concat my-epy-dir "epy-init.el")))
 
-(eval-after-load "python-mode"
-  '(progn
-     ;;python tab (ropemacs)
-     (defun python-indent-or-expand (arg)
-       "Either indent according to mode, or expand the word preceding point."
-       (interactive "*P")
-       (if (and
-	    (or (bobp) (= ?w (char-syntax (char-before))))
-	    (or (eobp) (not (= ?w (char-syntax (char-after))))))
-	   (rope-code-assist arg)
-	 (indent-according-to-mode)))
-     
-     (defun load-ropemacs ()
-       "Load pymacs and ropemacs"
-       (interactive)
-       (require 'pymacs)
-       (autoload 'pymacs-load "pymacs" nil t)
-       (autoload 'pymacs-eval "pymacs" nil t)
-       (autoload 'pymacs-apply "pymacs")
-       (autoload 'pymacs-call "pymacs")
-       (autoload 'pymacs-exec "pymacs" nil t)
-       (pymacs-load "ropemacs" "rope-")
-       (local-set-key [(meta ?/)] 'rope-code-assist)
-       (local-set-key [tab] 'python-indent-or-expand)
-       (setq rope-confirm-saving 'nil))
-     
-     (add-hook 'python-mode-hook 'load-ropemacs)))
-
-;;define some keys
-(eval-after-load "comint"
-  '(progn
-     (define-key comint-mode-map [(meta p)] 'comint-previous-matching-input-from-input)
-     (define-key comint-mode-map [(meta n)] 'comint-next-matching-input-from-input)
-     (define-key comint-mode-map [up] 'comint-next-input)
-     (define-key comint-mode-map [down] 'comint-previous-input)))
 
 
 ;; doxymacs
@@ -374,7 +339,7 @@
 (require 'program-utils)
 
 ;; haskell settings
-(load "~/work/github/emacs/site-lisp/haskell-mode/haskell-site-file")
+(load (concat my-config-dir "site-lisp/haskell-mode/haskell-site-file"))
 (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
 (add-hook 'haskell-mode-hook 'turn-on-haskell-indentation)
 

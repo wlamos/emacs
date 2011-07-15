@@ -13,3 +13,9 @@ If you want to change the font size, you can use the following:
 (set-face-attribute 'default nil :height 125)
 
 Just tune the :height to a proper value
+
+- python setting
+I simply use emacs-for-python package, which can be reached by
+https://github.com/gabrielelanaro/emacs-for-python
+
+(setq my-epy-dir "path/to/emacs-for-python")
