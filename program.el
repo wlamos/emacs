@@ -11,6 +11,7 @@
 		("\\.y$" . bison-mode)
 		("\\.tr$" . text-mode)
 		("\\.tr.i$" . text-mode)
+		("\\.json$" . text-mode)
 		("Make.apache" . makefile-mode)
 		("Make.exe.apache" . makefile-mode)
 		) auto-mode-alist))
@@ -26,33 +27,8 @@
 
 
 ;;; C/C++ dev setting
-;; Load CEDET
 (eval-after-load "cc-mode"
   '(progn
-     (require 'cedet)
-     ;;(require-maybe 'semantic-gcc)
-     ;;(load (concat my-config-dir "site-lisp/cedet-1.0/common/cedet.el"))
-     ;; Enable EDE (Project Management) features
-     (global-ede-mode 1)
-     (semantic-load-enable-code-helpers)
-     (semantic-load-enable-semantic-debugging-helpers)
-     (setq semantic-load-turn-everything-on t)
-     (define-key-after (lookup-key global-map [menu-bar tools])
-       [speedbar] '("Speedbar". speed-frame-mode) [calendar])
-     (setq semantic-idle-scheduler-idle-time 432000)
-     
-     ;;the directory of semantic files
-     (setq semanticdb-default-save-directory (expand-file-name "~/.emacs.d/backup/semantic.cache/semanticdb"))
-     (defconst cedet-user-include-dirs
-       (list "./"))
-
-     (require 'semantic-c nil 'noerror)
-     (let ((include-dirs cedet-user-include-dirs))
-       (mapc (lambda (dir)
-	       (semantic-add-system-include dir 'c++-mode)
-	       (semantic-add-system-include dir 'c-mode))
-	     include-dirs))
-     ;;auto complete
      (defun my-indent-or-complete ()
        (interactive)
        (if (looking-at "\\>")
@@ -60,7 +36,7 @@
 	 (indent-for-tab-command)))
      
      (global-set-key [(control tab)] 'my-indent-or-complete)
-     (autoload 'senator-try-expand-semantic "senator")
+     ;;(autoload 'senator-try-expand-semantic "senator")
      (setq hippie-expand-try-functions-list
 	   '(
 	     senator-try-expand-semantic
@@ -117,19 +93,12 @@
        (add-to-list 'c-cleanup-list 'defun-close-semi)
        (company-mode)
        (make-local-variable 'company-backends)
-       (setq company-backends '((company-keywords company-semantic))))
+       (setq company-backends '((company-keywords))))
 
      ;; (add-hook 'c++-mode-hook 'yas/minor-mode)
      (add-hook 'c++-mode-hook 'my-c++-mode-hook)
 
      ;;auto load the index of /usr/include created by semantic
-     (setq semanticdb-search-system-databases t)
-     (add-hook 'c-mode-common-hook
-	       (lambda ()
-		 (setq semanticdb-project-system-databases
-		       (list (semanticdb-create-database
-			      semanticdb-new-database-class
-			      "/usr/include")))))
      ))
 
 
@@ -214,9 +183,9 @@
 ;;; Common Lisp Dev
 ;;; SLIME setting
 (load (expand-file-name "~/quicklisp/slime-helper.el"))
-(setq inferior-lisp-program "~/bin/sbcl")
+(setq inferior-lisp-program "sbcl")
 (setenv "PATH" (concat "~/bin" ":" (getenv "PATH")))
-(setenv "SBCL_HOME" (expand-file-name "~/lib/sbcl"))
+;;(setenv "SBCL_HOME" (expand-file-name "~/lib/sbcl"))
 (slime-setup '(slime-fancy slime-scratch slime-editing-commands slime-asdf slime-repl))
 (setq slime-complete-symbol*-fancy t)
 (setq slime-complete-symbol-function 'slime-fuzzy-complete-symbol)
@@ -335,6 +304,19 @@
 ;; don't ask the compile command
 (setq compilation-read-command nil)
 
+(define-key compilation-mode-map "n" 'wl-goto-next-error)
+(define-key compilation-mode-map "p" 'wl-goto-previous-error)
+
+(defun wl-goto-next-error ()
+  (interactive)
+  (compilation-next-error 1)
+  (compile-goto-error))
+
+(defun wl-goto-previous-error ()
+  (interactive)
+  (compilation-previous-error 1)
+  (compile-goto-error))
+
 (require 'program-utils)
 
 ;; haskell settings
@@ -376,3 +358,5 @@
 			   "/usr/local/share/sawfish/1.8.0/lisp"
 			   "/usr/local/share/rep/0.91.1/lisp")))
 
+;; php-mode
+(require 'php-mode)
