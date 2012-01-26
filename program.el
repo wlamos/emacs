@@ -360,3 +360,48 @@
 
 ;; php-mode
 (require 'php-mode)
+
+;; erlang-mode
+(require 'erlang-start)
+(add-to-list 'auto-mode-alist '("\\.erl?$" . erlang-mode))
+(add-to-list 'auto-mode-alist '("\\.hrl?$" . erlang-mode))
+(defun my-erlang-mode-hook ()
+        ;; when starting an Erlang shell in Emacs, default in the node name
+        (setq inferior-erlang-machine-options '("-sname" "emacs"))
+        ;; add Erlang functions to an imenu menu
+        (imenu-add-to-menubar "imenu")
+        ;; customize keys
+        (local-set-key [return] 'newline-and-indent)
+        )
+;; Some Erlang customizations
+(add-hook 'erlang-mode-hook 'my-erlang-mode-hook)
+(defun erlang-export-current-function()
+  "export current function."
+  (interactive)
+  (save-excursion
+    (goto-char (car (bounds-of-thing-at-point 'defun)))
+    (when (re-search-forward "(\\(.*?\\))") ;search params
+      (let ((params (match-string 1))
+            param-count
+            funname
+            fun-declare)
+        (backward-sexp)
+        (skip-chars-backward " \t")
+        (setq funname (thing-at-point 'symbol))
+        (if (string-match "^[ \t]*$" params)
+            (setq param-count 0)
+          (setq param-count (length  (split-string params ","))))
+        (setq fun-declare (format "%s/%d" funname param-count))
+        (message "export function:%s" fun-declare)
+        (goto-char (point-min))
+        (if (re-search-forward "[ \t]*-export[ \t]*([ \t]*\\[" (point-max) t)
+            (if (looking-at "[ \t]*\\]")
+                (insert fun-declare )
+              (insert fun-declare ","))
+          (goto-char (point-min))
+          (if (re-search-forward "[ \t]*-module[ \t]*(" (point-max) t)
+              (progn
+                (end-of-line)
+                (insert "\n-export([" fun-declare "]).\n"))
+            (goto-char (point-min))
+            (insert "-export([" fun-declare "]).\n")))))))
