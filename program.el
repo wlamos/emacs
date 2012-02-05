@@ -93,7 +93,8 @@
        (add-to-list 'c-cleanup-list 'defun-close-semi)
        (company-mode)
        (make-local-variable 'company-backends)
-       (setq company-backends '((company-keywords))))
+       (setq company-backends '((company-keywords)))
+       (require 'xcscope))
 
      ;; (add-hook 'c++-mode-hook 'yas/minor-mode)
      (add-hook 'c++-mode-hook 'my-c++-mode-hook)
@@ -368,11 +369,13 @@
 (defun my-erlang-mode-hook ()
         ;; when starting an Erlang shell in Emacs, default in the node name
         (setq inferior-erlang-machine-options '("-sname" "emacs"))
-        ;; add Erlang functions to an imenu menu
-        (imenu-add-to-menubar "imenu")
-        ;; customize keys
-        (local-set-key [return] 'newline-and-indent)
-        )
+	;; customize keys
+        (local-set-key [return] 'newline-and-indent))
+
+(setq erlang-root-dir "/usr/lib/erlang/")
+(setq erlang-man-root-dir "/usr/lib/erlang/man/")
+(add-to-list 'exec-path "/usr/lib/erlang/bin/")
+
 ;; Some Erlang customizations
 (add-hook 'erlang-mode-hook 'my-erlang-mode-hook)
 (defun erlang-export-current-function()
@@ -405,3 +408,9 @@
                 (insert "\n-export([" fun-declare "]).\n"))
             (goto-char (point-min))
             (insert "-export([" fun-declare "]).\n")))))))
+
+(defun get-erl-man ()
+  (interactive)
+  (let* ((man-path "/usr/lib/erlang/man")
+         (man-args (format "-M %s %s" man-path (current-word))))
+    (man man-args)))
