@@ -26,6 +26,15 @@
 (autoload 'bison-mode "bison-mode.el")
 
 
+(require 'cedet)
+(require 'semantic-gcc)
+;;(global-ede-mode 1)
+(semantic-load-enable-code-helpers)
+(semantic-load-enable-semantic-debugging-helpers)
+(setq semantic-load-turn-everything-on t)
+(setq semantic-idle-scheduler-idle-time 432000)
+(require 'semantic-c-add-preprocessor-symbol nil 'noerror)
+(setq semanticdb-default-save-directory (expand-file-name ".emacs.d/backup/semantic.cache/semanticdb"))
 ;;; C/C++ dev setting
 (eval-after-load "cc-mode"
   '(progn
@@ -104,7 +113,7 @@
 
 
 ;;; hs-minor-mode
-(dolist (hook (list 'c-mode-common-hook
+(dolist (hook (list 'c-mode-common-hook		    
 		    'emacs-lisp-mode-hook
 		    'lisp-mode-hook
 		    'perl-mode-hook
@@ -305,8 +314,8 @@
 ;; don't ask the compile command
 (setq compilation-read-command nil)
 
-(define-key compilation-mode-map "n" 'wl-goto-next-error)
-(define-key compilation-mode-map "p" 'wl-goto-previous-error)
+;;(define-key compilation-mode-map "n" 'wl-goto-next-error)
+;;(define-key compilation-mode-map "p" 'wl-goto-previous-error)
 
 (defun wl-goto-next-error ()
   (interactive)
@@ -414,3 +423,10 @@
   (let* ((man-path "/usr/lib/erlang/man")
          (man-args (format "-M %s %s" man-path (current-word))))
     (man man-args)))
+
+
+(defun getFuncNameAtPoint()
+ (interactive)
+ (if (and (featurep 'semantic) semantic--buffer-cache)
+     (let ((ol (semantic-find-tag-by-overlay)))
+       (message (funcall semantic-which-function ol)))))

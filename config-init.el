@@ -7,6 +7,9 @@
 (let ((default-directory (concat my-config-dir "site-lisp/")))
   (normal-top-level-add-subdirs-to-load-path))
 
+(let ((default-directory "/usr/share/emacs/site-lisp/"))
+  (normal-top-level-add-subdirs-to-load-path))
+(setq load-path (sort load-path #'string<))
 (defmacro require-maybe (feature &optional file)
   "*Try to require FEATURE, but don't signal an error if `require' fails."
   `(require ,feature ,file 'noerror))
