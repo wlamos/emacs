@@ -1,4 +1,5 @@
 *.elc
+*.el~
 Makefile
 Makefile.in
 /site-lisp/bbdb/Makefile.in
