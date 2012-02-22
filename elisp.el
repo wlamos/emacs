@@ -192,6 +192,10 @@
     (setq org-log-done t
 	  org-todo-keywords '((sequence "TODO(t)" "DOING(i!)" "HANGUP(h!)" "|" "DONE(d!)" "CANCEL(c!)")))
     (require 'org-ext)))
+(setq org-publish-project-alist
+      '(("notes" :base-directory "~/Dropbox/notes/"
+	 :publishing-directory "~/Dropbox/notes_html/"
+	 :htmlized-source t)))
 
 ;;sdcv mode
 (require 'sdcv-mode)

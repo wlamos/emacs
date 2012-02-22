@@ -402,9 +402,11 @@ calling the default command"
                     (outline-next-heading)
                     (> (point) end-le))
               (move-text-right 1)))))
-    (if (org-at-table-p)
-        (call-interactively 'org-cycle)
-      (insert ?\t))))
+    ;; (if (org-at-table-p)
+    ;;     (call-interactively 'org-cycle)
+    ;;   (insert ?\t))
+    (call-interactively 'org-cycle)
+    ))
 
 ;;;###autoload
 (defun org/ext-shifttab (&optional arg)
